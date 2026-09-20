@@ -1,0 +1,7 @@
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+session_history.json
+.system_generated/
