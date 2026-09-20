@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kariya Sentinel — Autonomous National Cyber Incident Triage & Response | Builder OS</title>
+  <title>Kariya Sentinel — Autonomous National Cyber Incident Triage & Defense Engine | Builder OS</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -102,6 +102,12 @@
 
       <!-- Live Actions & Status -->
       <div class="flex items-center space-x-2">
+        <!-- Live Agent Status Badge -->
+        <button onclick="switchTab('agent')" class="hidden sm:flex items-center space-x-1.5 bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-md text-xs font-mono hover:bg-emerald-900/60 transition" title="KARIYA AI Agent Active">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Agent Online</span>
+        </button>
+
         <button id="offlineToggleBtn" onclick="toggleOfflineMode()" class="px-2.5 py-1 rounded-md text-xs font-mono transition flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300" title="Simulate Offline Power/Fiber Failure (Rule 06)">
           <span id="networkDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span id="networkText" class="hidden xs:inline">Online Grid</span>
@@ -129,23 +135,29 @@
           <span id="queueBadgeCount" class="bg-zinc-800 text-zinc-300 text-[10px] font-mono px-1.5 py-0.2 rounded-full">360</span>
         </button>
 
+        <button onclick="switchTab('agent')" id="tabBtn-agent" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
+          <i class="fa-solid fa-robot text-emerald-400"></i>
+          <span>Talk to KARIYA Agent</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        </button>
+
         <button onclick="switchTab('sandbox')" id="tabBtn-sandbox" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
           <i class="fa-solid fa-terminal text-amber-400"></i>
           <span>Live Triager Sandbox</span>
         </button>
 
         <button onclick="switchTab('strategy')" id="tabBtn-strategy" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
-          <i class="fa-solid fa-trophy text-amber-400"></i>
-          <span class="text-amber-300 font-semibold">10M Winning Strategy</span>
+          <i class="fa-solid fa-diagram-project text-cyan-400"></i>
+          <span>Architecture & Playbook</span>
         </button>
 
         <button onclick="switchTab('analytics')" id="tabBtn-analytics" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
-          <i class="fa-solid fa-chart-simple text-cyan-400"></i>
+          <i class="fa-solid fa-chart-simple text-purple-400"></i>
           <span>Threat Analytics</span>
         </button>
 
         <button onclick="switchTab('error_analysis')" id="tabBtn-error_analysis" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
-          <i class="fa-solid fa-microscope text-purple-400"></i>
+          <i class="fa-solid fa-microscope text-rose-400"></i>
           <span>Rule 05: Benchmark Audit</span>
         </button>
 
@@ -155,7 +167,7 @@
         </button>
 
         <button onclick="switchTab('dossier')" id="tabBtn-dossier" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
-          <i class="fa-solid fa-file-export text-rose-400"></i>
+          <i class="fa-solid fa-file-export text-zinc-400"></i>
           <span>Statutory Export</span>
         </button>
       </div>
@@ -179,7 +191,7 @@
       </div>
 
       <div class="space-y-2 text-xs font-mono">
-        <div class="text-zinc-400">ICSC 2026 Universities Hackathon • Track D (10M Naira)</div>
+        <div class="text-zinc-400">ICSC 2026 Universities Hackathon • Track D: Government & Public Sector</div>
         <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800 space-y-1.5">
           <div class="text-emerald-400 font-bold">TEAM BUILDER OS:</div>
           <div class="text-zinc-200">1. Jabir Mustafa Sulaiman <span class="text-emerald-400 font-semibold">[Team Lead]</span></div>
@@ -318,7 +330,90 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 2: INTERACTIVE LIVE SANDBOX (FOR JUDGES)                -->
+    <!-- TAB 2: TALK TO KARIYA AI AGENT (INTERACTIVE CONSOLE)        -->
+    <!-- ============================================================ -->
+    <div id="tabContent-agent" class="tab-view hidden space-y-4">
+      
+      <div class="card-surface rounded-xl p-5 sm:p-6 border-emerald-500/30 flex flex-col h-[75vh]">
+        
+        <!-- Agent Header -->
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-3 mb-3">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-robot text-base"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-white font-mono text-sm">KARIYA SENTINEL AGENT</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/60">Autonomous Copilot</span>
+              </div>
+              <p class="text-[11px] text-zinc-400 font-mono">Real-time incident triage, forensic Q&A, and live DuckDuckGo threat search.</p>
+            </div>
+          </div>
+
+          <div class="hidden sm:flex items-center space-x-2 text-xs font-mono text-zinc-400">
+            <span>By <b>Builder OS</b></span>
+            <span class="text-zinc-700">•</span>
+            <span class="text-emerald-400">Track D Assistant</span>
+          </div>
+        </div>
+
+        <!-- Quick Action Prompt Chips -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 text-[11px] font-mono text-zinc-300">
+          <span class="text-zinc-500 text-[10px] uppercase font-bold mr-1">Quick Prompts:</span>
+          <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+            ⚡ Triage Pidgin Ransomware
+          </button>
+          <button onclick="sendQuickPrompt('Explain your Rule 05 honest error analysis and boundary failure modes')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+            ⚖️ Rule 05 Error Analysis
+          </button>
+          <button onclick="sendQuickPrompt('How do you survive power and network cuts in Nigeria under Rule 06?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+            🛡️ Rule 06 Power Cut Spec
+          </button>
+          <button onclick="sendQuickPrompt('/search ngCERT latest Nigeria cyber advisories 2026')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+            🔍 Live Web Search ngCERT
+          </button>
+          <button onclick="sendQuickPrompt('Who is Builder OS and what is your mission?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+            👥 About Builder OS
+          </button>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="chatMessages" class="flex-1 overflow-y-auto space-y-3.5 pr-2 py-2 font-mono text-xs">
+          <!-- Initial Agent Welcome Message -->
+          <div class="flex items-start space-x-2.5">
+            <div class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-shield-halved text-xs"></i>
+            </div>
+            <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2">
+              <p><b>Greetings! I am KARIYA Sentinel</b>, an autonomous cyber defense copilot built by <b>Builder OS</b> for Track D (Government & Public Sector).</p>
+              <p class="text-zinc-400">You can talk to me directly here. I can autonomously:</p>
+              <ul class="list-disc list-inside text-zinc-300 space-y-1">
+                <li><b>Triage any unstructured incident report</b> (English, Nigerian Pidgin, SMS, emails).</li>
+                <li><b>Search the live web</b> via DuckDuckGo with zero login/API keys.</li>
+                <li><b>Audit our ML benchmark metrics</b> and explain Rule 05 / Rule 06 compliance.</li>
+              </ul>
+              <p class="text-emerald-400 text-[11px]">Type a question below or click any of the quick prompt chips above!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="pt-3 border-t border-zinc-800 flex items-center gap-2">
+          <input type="text" id="chatInput" onkeydown="handleChatKey(event)" placeholder="Ask KARIYA anything, or type '/triage <report>' or '/search <query>'..." class="flex-1 bg-[#09090b] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition">
+          <button onclick="sendChatMessage()" id="chatSendBtn" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold font-mono text-xs transition flex items-center gap-1.5 flex-shrink-0">
+            <span>Send</span>
+            <i class="fa-solid fa-arrow-up text-xs"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: INTERACTIVE LIVE SANDBOX                             -->
     <!-- ============================================================ -->
     <div id="tabContent-sandbox" class="tab-view hidden space-y-5">
       
@@ -327,7 +422,7 @@
           <div>
             <h2 class="text-base font-semibold text-white flex items-center gap-2">
               <i class="fa-solid fa-terminal text-amber-400 text-sm"></i>
-              Live Triage Simulator (Judge Defense Console)
+              Live Triage Simulator (Interactive Defense Console)
             </h2>
             <p class="text-xs text-zinc-400 mt-0.5">
               Execute live 5-stage NLP classification, Nigerian dialect parsing, and NDPR redaction.
@@ -366,25 +461,25 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 3: 10M WINNING BLUEPRINT & JUDGES RUBRIC MATCH           -->
+    <!-- TAB 4: ARCHITECTURE & PLAYBOOK                               -->
     <!-- ============================================================ -->
     <div id="tabContent-strategy" class="tab-view hidden space-y-5">
       
       <!-- Top Banner -->
-      <div class="card-surface rounded-xl p-5 sm:p-6 border-amber-500/30 space-y-4">
+      <div class="card-surface rounded-xl p-5 sm:p-6 border-zinc-800 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
           <div>
             <div class="flex items-center space-x-2">
-              <span class="text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded">ICSC 2026 UNIVERSITIES HACKATHON</span>
-              <span class="text-xs font-mono text-emerald-400 font-semibold">10,000,000 NGN GRAND PRIZE</span>
+              <span class="text-[10px] font-mono font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 px-2 py-0.5 rounded">ICSC 2026 UNIVERSITIES HACKATHON</span>
+              <span class="text-xs font-mono text-emerald-400 font-semibold">TRACK D: GOVERNMENT & PUBLIC SECTOR</span>
             </div>
-            <h2 class="text-lg font-bold text-white mt-1">Why Builder OS Wins Track D (Government & Public Sector)</h2>
+            <h2 class="text-lg font-bold text-white mt-1">Technical Architecture & Incident Response Playbook</h2>
             <p class="text-xs text-zinc-400 mt-0.5">
-              Comprehensive defense brief, high-star GitHub research synthesis, and strict rubric compliance.
+              Comprehensive defense brief, high-star GitHub research synthesis, and strict rubric compliance by Builder OS.
             </p>
           </div>
           <div class="font-mono text-right hidden sm:block">
-            <div class="text-xs text-zinc-500">Team Roster</div>
+            <div class="text-xs text-zinc-500">Development Team</div>
             <div class="text-emerald-400 font-bold text-sm">Builder OS</div>
           </div>
         </div>
@@ -432,8 +527,8 @@
             <thead class="bg-zinc-900 text-zinc-400 text-[10px] uppercase border-b border-zinc-800">
               <tr>
                 <th class="px-3.5 py-2.5">Hackathon Requirement</th>
-                <th class="px-3.5 py-2.5 text-rose-400">Why Competitors Fail</th>
-                <th class="px-3.5 py-2.5 text-emerald-400">How Builder OS Wins (10M Score)</th>
+                <th class="px-3.5 py-2.5 text-rose-400">Why Typical Approaches Fail</th>
+                <th class="px-3.5 py-2.5 text-emerald-400">Builder OS Implementation</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-zinc-800/60 bg-zinc-950/60 text-[11px]">
@@ -477,51 +572,10 @@
         </div>
       </div>
 
-      <!-- High-Star GitHub Research Details -->
-      <div class="card-surface rounded-xl p-5 space-y-3 font-mono text-xs">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="fa-brands fa-github text-emerald-400"></i>
-          GitHub Ecosystem Research: High-Star Open Source Implementations
-        </h3>
-        <p class="text-zinc-400 text-[11px] leading-relaxed">
-          Builder OS conducted a comprehensive survey of GitHub repositories with 1,000+ stars across Incident Response, SOAR, and PII De-identification:
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-          <div class="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-1">
-            <div class="text-emerald-400 font-bold">1. FIR (Fast Incident Response) & DFIR-IRIS</div>
-            <p class="text-zinc-400">
-              Showed how elite CSIRT teams structure incident severity around statutory business impact rather than arbitrary technical tags. Kariya Sentinel adopted this into its 4-tier SLA urgency engine.
-            </p>
-          </div>
-
-          <div class="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-1">
-            <div class="text-cyan-400 font-bold">2. Microsoft Presidio & Philter (PII Redaction)</div>
-            <p class="text-zinc-400">
-              Demonstrated that regex-driven deterministic tokenization outperforms probabilistic LLMs on national identifiers. Kariya Sentinel built zero-leakage regex scrubbers for Nigerian BVN, NIN, and NUBAN bank accounts.
-            </p>
-          </div>
-
-          <div class="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-1">
-            <div class="text-purple-400 font-bold">3. TheHive & Cortex (Case Clustering)</div>
-            <p class="text-zinc-400">
-              Emphasized parent-child campaign linking. Multiple reports regarding the same phishing wave or ransomware outbreak are merged into a single Master Incident Ticket with shared IOC timelines.
-            </p>
-          </div>
-
-          <div class="bg-zinc-900 p-3 rounded border border-zinc-800 space-y-1">
-            <div class="text-amber-400 font-bold">4. Shuffle SOAR (Automated Dispatch)</div>
-            <p class="text-zinc-400">
-              Validated statutory workflow routing. Kariya Sentinel maps every triaged incident to the appropriate Nigerian authority (ngCERT, NITDA, EFCC, or IPPIS) with statutory justification.
-            </p>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 4: THREAT INTELLIGENCE ANALYTICS                        -->
+    <!-- TAB 5: THREAT INTELLIGENCE ANALYTICS                        -->
     <!-- ============================================================ -->
     <div id="tabContent-analytics" class="tab-view hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -570,7 +624,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 5: RULE 05 HONEST ERROR BENCHMARK AUDIT                 -->
+    <!-- TAB 6: RULE 05 HONEST ERROR BENCHMARK AUDIT                 -->
     <!-- ============================================================ -->
     <div id="tabContent-error_analysis" class="tab-view hidden space-y-4">
       <div class="card-surface rounded-xl p-5 space-y-5">
@@ -625,7 +679,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 6: RULE 06 RESILIENT ARCHITECTURE (POWER/FIBER CUTS)     -->
+    <!-- TAB 7: RULE 06 RESILIENT ARCHITECTURE (POWER/FIBER CUTS)     -->
     <!-- ============================================================ -->
     <div id="tabContent-architecture" class="tab-view hidden space-y-4">
       <div class="card-surface rounded-xl p-5 space-y-5">
@@ -671,13 +725,13 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB 7: STATUTORY EXPORT DOSSIER                             -->
+    <!-- TAB 8: STATUTORY EXPORT DOSSIER                             -->
     <!-- ============================================================ -->
     <div id="tabContent-dossier" class="tab-view hidden space-y-4">
       <div class="card-surface rounded-xl p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
           <div>
-            <span class="text-[10px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-800/80 px-2 py-0.5 rounded">STATUTORY DISPATCH</span>
+            <span class="text-[10px] font-mono font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 px-2 py-0.5 rounded">STATUTORY DISPATCH</span>
             <h2 class="text-base font-bold text-white mt-1">Forensic Export & ngCERT Incident Notification</h2>
           </div>
           <div class="flex items-center space-x-2">
@@ -717,6 +771,13 @@
     </div>
   </div>
 
+  <!-- FLOATING QUICK CHAT BUTTON -->
+  <button onclick="switchTab('agent')" class="fixed bottom-5 right-5 z-40 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold px-3.5 py-2.5 rounded-full shadow-lg shadow-emerald-950/80 border border-emerald-400/40 transition flex items-center gap-2 font-mono text-xs cursor-pointer">
+    <span class="w-2 h-2 rounded-full bg-emerald-950 animate-ping"></span>
+    <i class="fa-solid fa-robot text-sm"></i>
+    <span class="hidden sm:inline">Ask KARIYA Agent</span>
+  </button>
+
   <!-- FOOTER -->
   <footer class="border-t border-zinc-800/60 bg-[#09090b] py-3.5 px-4 sm:px-6 mt-auto text-xs font-mono text-zinc-500">
     <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
@@ -724,7 +785,7 @@
         <span class="text-emerald-400 font-semibold">Kariya Sentinel</span> • Developed by <b class="text-zinc-300">Builder OS</b> (Jabir Mustafa Sulaiman, Ahamad Musa, Halima Lawal)
       </div>
       <div>
-        ICSC 2026 Universities Hackathon • Track D Grand Prize Submission (10M NGN)
+        Track D: Government & Public Sector • ICSC 2026 Universities Hackathon
       </div>
     </div>
   </footer>
@@ -735,6 +796,7 @@
     let allIncidents = [];
     let selectedIndex = 0;
     let chartInstances = {};
+    let isAgentResponding = false;
 
     function updateClock() {
       const now = new Date();
@@ -771,6 +833,12 @@
       }
 
       if (tabId === 'analytics') renderCharts();
+      if (tabId === 'agent') {
+        setTimeout(() => {
+          const input = document.getElementById('chatInput');
+          if (input) input.focus();
+        }, 100);
+      }
     }
 
     async function fetchDashboardData() {
@@ -1010,6 +1078,132 @@
       renderIncidentMasterList(filtered);
     }
 
+    /* ------------------------------------------------------------- */
+    /* AI AGENT INTERACTIVE CHAT ENGINE                              */
+    /* ------------------------------------------------------------- */
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chatInput').value = promptText;
+      sendChatMessage();
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    }
+
+    async function sendChatMessage() {
+      if (isAgentResponding) return;
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      appendChatMessage('user', text);
+
+      const sendBtn = document.getElementById('chatSendBtn');
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+      isAgentResponding = true;
+
+      // Add typing placeholder
+      const typingId = 'typing-' + Date.now();
+      appendTypingIndicator(typingId);
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        removeTypingIndicator(typingId);
+        appendChatMessage('agent', data.reply);
+      } catch (err) {
+        removeTypingIndicator(typingId);
+        appendChatMessage('agent', `❌ Communication error: ${err.message || err}`);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = `<span>Send</span> <i class="fa-solid fa-arrow-up text-xs"></i>`;
+        isAgentResponding = false;
+      }
+    }
+
+    function appendChatMessage(role, content) {
+      const container = document.getElementById('chatMessages');
+      const isUser = role === 'user';
+      
+      const msgDiv = document.createElement('div');
+      msgDiv.className = isUser ? 'flex items-start justify-end space-x-2' : 'flex items-start space-x-2.5';
+
+      let renderedBody = formatMarkdown(content);
+
+      if (isUser) {
+        msgDiv.innerHTML = `
+          <div class="bg-zinc-800 text-zinc-100 p-3 rounded-xl rounded-tr-none max-w-[85%] leading-relaxed">
+            ${escapeHtml(content)}
+          </div>
+          <div class="w-6 h-6 rounded bg-zinc-700 text-zinc-300 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">
+            <i class="fa-solid fa-user"></i>
+          </div>
+        `;
+      } else {
+        msgDiv.innerHTML = `
+          <div class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2">
+            ${renderedBody}
+          </div>
+        `;
+      }
+
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendTypingIndicator(id) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.id = id;
+      div.className = 'flex items-center space-x-2 text-zinc-500 text-[11px] font-mono py-1';
+      div.innerHTML = `
+        <div class="w-6 h-6 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </div>
+        <span>KARIYA Agent is reasoning & running tools...</span>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeTypingIndicator(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+      let html = escapeHtml(text);
+      // bold
+      html = html.replace(/\*\*(.*?)\*\*/g, '<b class="text-white font-semibold">$1</b>');
+      // italic
+      html = html.replace(/\*(.*?)\*/g, '<i class="text-zinc-300">$1</i>');
+      // inline code
+      html = html.replace(/`([^`]+)`/g, '<code class="bg-zinc-950 px-1.5 py-0.5 rounded text-emerald-400 border border-zinc-800">$1</code>');
+      // headers
+      html = html.replace(/^### (.*$)/gim, '<div class="text-xs font-bold text-white border-b border-zinc-800 pb-1 mt-2 mb-1">$1</div>');
+      html = html.replace(/^## (.*$)/gim, '<div class="text-sm font-bold text-emerald-400 border-b border-zinc-800 pb-1 mt-2 mb-1">$1</div>');
+      // blockquote
+      html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-emerald-500 pl-2 text-zinc-400 italic my-1">$1</blockquote>');
+      // lists
+      html = html.replace(/^- (.*$)/gim, '<div class="flex items-start gap-1.5 my-0.5"><span class="text-emerald-400">•</span><span>$1</span></div>');
+      // newlines
+      html = html.replace(/\n\n/g, '<br/>');
+      return html;
+    }
+
     const PRESETS = {
       preset1: `CBN ABUJA CRITICAL ALERT: Oga, our core clearing server don get infected with LockBit 3.0 ransomware! The whole system is displaying .locked files. The hacker dey demand 15 Bitcoin ransom to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Threat actor IP address connected via 197.210.64.12. Please respond urgently before payment clearing window closes at 4 PM! Officer BVN: 22345678901, Phone: 08031234567.`,
       preset2: `FIRS TAX FRAUD ALERT: High-volume phishing SMS campaign targeting taxpayers: 'Dear Customer, your 2025 FIRS tax refund of N85,000 is ready. Click https://firs-portal-refund.ng/login.php to verify BVN and NIN immediately.' The phishing domain resolves to 102.89.33.15. Victim submitted NIN: 12345678901 and Account: 0123456789 (Access Bank).`,
@@ -1089,7 +1283,7 @@
 
         <div class="space-y-2 font-mono text-xs">
           <div class="text-emerald-400 font-semibold text-[11px]">NDPR-Sanitized Output:</div>
-          <div class="bg-zinc-950 p-3 rounded border border-emerald-900/40 text-emerald-300 text-[11px] leading-relaxed whitespace-pre-wrap">${escapeHtml(r.sanitized_text || '')}</div>
+          <div class="bg-zinc-950 p-3 rounded border border-emerald-900/40 text-emerald-300 text-[11px] leading-relaxed whitespace-pre-wrap">${escapeHtml(r.cleaned_text || r.sanitized_text || '')}</div>
         </div>
       `;
     }
@@ -1233,7 +1427,9 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'right', labels: { color: '#a1a1aa', font: { size: 10 } } } }
+            plugins: {
+              legend: { position: 'right', labels: { color: '#a1a1aa', font: { size: 10 } } }
+            }
           }
         });
       }
