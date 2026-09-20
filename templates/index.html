@@ -384,6 +384,9 @@
           <button onclick="sendQuickPrompt('/triage IPPIS ALERT: 40 ghost worker accounts inserted into Federal Ministry of Agriculture payroll. Beneficiary Zenith Bank 2088192039. Attacker admin console IP 105.112.44.88.')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
             💳 Triage IPPIS Payroll Tamper
           </button>
+          <button onclick="sendQuickPrompt('What is critical for today in Nigerian MDAs?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
+            📊 What is Critical Today?
+          </button>
           <button onclick="sendQuickPrompt('Explain your Rule 05 honest error analysis and boundary failure modes in detail')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-cyan-300">
             ⚖️ Rule 05 Error Analysis
           </button>
@@ -828,11 +831,17 @@
 
     <!-- Sidecar Chat Stream -->
     <div id="sidecarMessages" class="flex-1 overflow-y-auto p-3.5 space-y-3 font-mono text-xs">
-      <div class="bg-zinc-900/80 p-3 rounded-lg border border-zinc-800 space-y-1.5 text-zinc-300 text-[11px]">
+      <div class="bg-zinc-900/80 p-3 rounded-lg border border-zinc-800 space-y-2 text-zinc-300 text-[11px]">
         <div class="text-emerald-400 font-bold flex items-center gap-1.5">
           <i class="fa-solid fa-shield-halved"></i> Quick Assistant
         </div>
         <p class="text-zinc-400">Ask any question about Nigerian MDAs, live triage, or competition rubrics from any tab.</p>
+        <div class="flex flex-wrap gap-1.5 pt-1 text-[10px]">
+          <button onclick="sendSidecarPrompt('What is critical for today in Nigerian MDAs?')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-0.5 rounded text-zinc-300 hover:text-emerald-300">📊 Critical Today</button>
+          <button onclick="sendSidecarPrompt('/triage CBN ALERT: Payment clearing database encrypted with .locked ransomware. Dem dey ask for 15 btc to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Officer BVN: 22345678901')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-0.5 rounded text-zinc-300 hover:text-emerald-300">⚡ Triage Incident</button>
+          <button onclick="sendSidecarPrompt('Explain your Rule 06 power cut and fiber outage resilience')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-0.5 rounded text-zinc-300 hover:text-cyan-300">🛡️ Rule 06 Spec</button>
+          <button onclick="sendSidecarPrompt('Who is Builder OS?')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-0.5 rounded text-zinc-300 hover:text-purple-300">👥 Builder OS</button>
+        </div>
       </div>
     </div>
 
@@ -1202,6 +1211,9 @@
       }
     }
 
+    let agentChatHistory = [];
+    let sidecarChatHistory = [];
+
     async function sendChatMessage() {
       if (isAgentResponding) return;
       const input = document.getElementById('chatInput');
@@ -1210,6 +1222,7 @@
 
       input.value = '';
       appendChatMessage('user', text);
+      agentChatHistory.push({ role: 'user', content: text });
 
       const sendBtn = document.getElementById('chatSendBtn');
       sendBtn.disabled = true;
@@ -1223,11 +1236,13 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, history: agentChatHistory })
         });
         const data = await res.json();
         removeTypingIndicator(typingId);
         appendChatMessage('agent', data.reply, data.triage_result);
+        agentChatHistory.push({ role: 'assistant', content: data.reply });
+        if (agentChatHistory.length > 12) agentChatHistory = agentChatHistory.slice(-12);
       } catch (err) {
         removeTypingIndicator(typingId);
         appendChatMessage('agent', `❌ Communication error: ${err.message || err}`);
@@ -1252,6 +1267,7 @@
       uDiv.textContent = text;
       container.appendChild(uDiv);
       container.scrollTop = container.scrollHeight;
+      sidecarChatHistory.push({ role: 'user', content: text });
 
       // Typing
       const tDiv = document.createElement('div');
@@ -1264,7 +1280,7 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, history: sidecarChatHistory })
         });
         const data = await res.json();
         tDiv.remove();
@@ -1274,6 +1290,8 @@
         aDiv.innerHTML = formatMarkdown(data.reply);
         container.appendChild(aDiv);
         container.scrollTop = container.scrollHeight;
+        sidecarChatHistory.push({ role: 'assistant', content: data.reply });
+        if (sidecarChatHistory.length > 12) sidecarChatHistory = sidecarChatHistory.slice(-12);
       } catch (err) {
         tDiv.remove();
         const eDiv = document.createElement('div');
@@ -1281,6 +1299,11 @@
         eDiv.textContent = 'Error: ' + err;
         container.appendChild(eDiv);
       }
+    }
+
+    function sendSidecarPrompt(text) {
+      document.getElementById('sidecarInput').value = text;
+      sendSidecarMessage();
     }
 
     function appendChatMessage(role, content, triageData) {
