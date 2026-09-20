@@ -27,7 +27,7 @@
           },
           colors: {
             zinc: {
-              850: '#1c1c20',
+              850: '#1a1a1e',
               900: '#121215',
               950: '#09090b'
             }
@@ -68,6 +68,12 @@
       border-color: #27272a;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
+
+    @keyframes agent-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.15); }
+    }
+    .radar-pulse { animation: agent-pulse 2s infinite ease-in-out; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans text-sm selection:bg-emerald-500/20 selection:text-emerald-300">
@@ -102,10 +108,10 @@
 
       <!-- Live Actions & Status -->
       <div class="flex items-center space-x-2">
-        <!-- Live Agent Status Badge -->
-        <button onclick="switchTab('agent')" class="hidden sm:flex items-center space-x-1.5 bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-md text-xs font-mono hover:bg-emerald-900/60 transition" title="KARIYA AI Agent Active">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Agent Online</span>
+        <!-- Live Agent Interactive Button -->
+        <button onclick="switchTab('agent')" class="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-md text-xs font-mono hover:bg-emerald-900/70 transition shadow-sm" title="Talk directly to KARIYA Autonomous Agent">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 radar-pulse"></span>
+          <span class="font-semibold">Talk to Agent</span>
         </button>
 
         <button id="offlineToggleBtn" onclick="toggleOfflineMode()" class="px-2.5 py-1 rounded-md text-xs font-mono transition flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300" title="Simulate Offline Power/Fiber Failure (Rule 06)">
@@ -137,7 +143,7 @@
 
         <button onclick="switchTab('agent')" id="tabBtn-agent" class="tab-btn px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition flex items-center gap-2">
           <i class="fa-solid fa-robot text-emerald-400"></i>
-          <span>Talk to KARIYA Agent</span>
+          <span class="font-semibold text-emerald-300">KARIYA Agent Console</span>
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
         </button>
 
@@ -334,47 +340,60 @@
     <!-- ============================================================ -->
     <div id="tabContent-agent" class="tab-view hidden space-y-4">
       
-      <div class="card-surface rounded-xl p-5 sm:p-6 border-emerald-500/30 flex flex-col h-[75vh]">
+      <div class="card-surface rounded-xl p-4 sm:p-6 border-emerald-500/30 flex flex-col h-[75vh] shadow-xl">
         
-        <!-- Agent Header -->
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-3 mb-3">
+        <!-- Agent Header & Vitals -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3.5 mb-2">
           <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-              <i class="fa-solid fa-robot text-base"></i>
+            <div class="relative">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600/30 to-teal-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shadow-md">
+                <i class="fa-solid fa-robot text-lg"></i>
+              </div>
+              <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-zinc-950 radar-pulse"></span>
             </div>
             <div>
               <div class="flex items-center space-x-2">
-                <span class="font-bold text-white font-mono text-sm">KARIYA SENTINEL AGENT</span>
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/60">Autonomous Copilot</span>
+                <span class="font-bold text-white font-mono text-sm tracking-wide">KARIYA SENTINEL AGENT</span>
+                <span class="text-[10px] font-mono text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/40 font-semibold">Autonomous SOAR</span>
               </div>
-              <p class="text-[11px] text-zinc-400 font-mono">Real-time incident triage, forensic Q&A, and live DuckDuckGo threat search.</p>
+              <p class="text-[11px] text-zinc-400 font-mono mt-0.5">National Incident Handler for Nigerian Public Sector • Developed by Builder OS</p>
             </div>
           </div>
 
-          <div class="hidden sm:flex items-center space-x-2 text-xs font-mono text-zinc-400">
-            <span>By <b>Builder OS</b></span>
-            <span class="text-zinc-700">•</span>
-            <span class="text-emerald-400">Track D Assistant</span>
+          <!-- Capability Badges & Controls -->
+          <div class="flex items-center space-x-2 text-xs font-mono">
+            <div class="hidden md:flex items-center space-x-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded text-[10px] text-zinc-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Local NLP Engine</span>
+              <span class="text-zinc-600">•</span>
+              <span>NDPA 2023 Scrubber</span>
+            </div>
+
+            <button onclick="clearChatMessages()" class="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition text-[11px]" title="Clear Conversation Memory">
+              <i class="fa-solid fa-trash-can mr-1"></i> Clear
+            </button>
           </div>
         </div>
 
         <!-- Quick Action Prompt Chips -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 text-[11px] font-mono text-zinc-300">
-          <span class="text-zinc-500 text-[10px] uppercase font-bold mr-1">Quick Prompts:</span>
-          <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 text-[11px] font-mono text-zinc-300 border-b border-zinc-800/60 mb-2">
+          <span class="text-zinc-500 text-[10px] uppercase font-bold mr-1 flex-shrink-0"><i class="fa-solid fa-bolt text-emerald-400 mr-1"></i>Quick Actions:</span>
+          <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
             ⚡ Triage Pidgin Ransomware
           </button>
-          <button onclick="sendQuickPrompt('Explain your Rule 05 honest error analysis and boundary failure modes')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+          <button onclick="sendQuickPrompt('/triage IPPIS ALERT: 40 ghost worker accounts inserted into Federal Ministry of Agriculture payroll. Beneficiary Zenith Bank 2088192039. Attacker admin console IP 105.112.44.88.')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
+            💳 Triage IPPIS Payroll Tamper
+          </button>
+          <button onclick="sendQuickPrompt('Explain your Rule 05 honest error analysis and boundary failure modes in detail')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-cyan-300">
             ⚖️ Rule 05 Error Analysis
           </button>
-          <button onclick="sendQuickPrompt('How do you survive power and network cuts in Nigeria under Rule 06?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+          <button onclick="sendQuickPrompt('How does Kariya Sentinel maintain zero data loss during power cuts and subsea fiber outages (Rule 06)?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
             🛡️ Rule 06 Power Cut Spec
           </button>
-          <button onclick="sendQuickPrompt('/search ngCERT latest Nigeria cyber advisories 2026')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+          <button onclick="sendQuickPrompt('/search ngCERT latest Nigeria cyber advisories 2026')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-purple-300">
             🔍 Live Web Search ngCERT
           </button>
-          <button onclick="sendQuickPrompt('Who is Builder OS and what is your mission?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap">
+          <button onclick="sendQuickPrompt('Who is Builder OS and what is your core architectural mission?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
             👥 About Builder OS
           </button>
         </div>
@@ -383,18 +402,27 @@
         <div id="chatMessages" class="flex-1 overflow-y-auto space-y-3.5 pr-2 py-2 font-mono text-xs">
           <!-- Initial Agent Welcome Message -->
           <div class="flex items-start space-x-2.5">
-            <div class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 border border-emerald-500/30">
               <i class="fa-solid fa-shield-halved text-xs"></i>
             </div>
-            <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2">
-              <p><b>Greetings! I am KARIYA Sentinel</b>, an autonomous cyber defense copilot built by <b>Builder OS</b> for Track D (Government & Public Sector).</p>
-              <p class="text-zinc-400">You can talk to me directly here. I can autonomously:</p>
-              <ul class="list-disc list-inside text-zinc-300 space-y-1">
-                <li><b>Triage any unstructured incident report</b> (English, Nigerian Pidgin, SMS, emails).</li>
-                <li><b>Search the live web</b> via DuckDuckGo with zero login/API keys.</li>
-                <li><b>Audit our ML benchmark metrics</b> and explain Rule 05 / Rule 06 compliance.</li>
-              </ul>
-              <p class="text-emerald-400 text-[11px]">Type a question below or click any of the quick prompt chips above!</p>
+            <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2.5 shadow-sm">
+              <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                <span class="font-bold text-white text-xs">KARIYA Sentinel Intelligence</span>
+                <span class="text-[10px] text-zinc-500">Autonomous Ready</span>
+              </div>
+              <p><b>Greetings! I am KARIYA Sentinel</b>, Nigeria's sovereign cyber incident triage copilot developed by <b>Builder OS</b> for Track D (Government & Public Sector).</p>
+              <p class="text-zinc-400">You can speak directly with me in plain English or Nigerian Pidgin. I am equipped to:</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800/80">
+                  <span class="text-emerald-400 font-semibold block mb-0.5">⚡ Autonomous Triage:</span>
+                  <span class="text-zinc-400">Paste any report or type <code>/triage &lt;text&gt;</code> to extract IOCs, scrub BVN/NIN, and assign SLAs.</span>
+                </div>
+                <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800/80">
+                  <span class="text-purple-400 font-semibold block mb-0.5">🔍 Live Threat Search:</span>
+                  <span class="text-zinc-400">Type <code>/search &lt;query&gt;</code> for live DuckDuckGo threat intel with zero API keys required.</span>
+                </div>
+              </div>
+              <p class="text-emerald-400 text-[11px] pt-1">💡 Click any quick prompt chip above or type an incident report below to begin.</p>
             </div>
           </div>
         </div>
@@ -402,7 +430,7 @@
         <!-- Chat Input Form -->
         <div class="pt-3 border-t border-zinc-800 flex items-center gap-2">
           <input type="text" id="chatInput" onkeydown="handleChatKey(event)" placeholder="Ask KARIYA anything, or type '/triage <report>' or '/search <query>'..." class="flex-1 bg-[#09090b] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition">
-          <button onclick="sendChatMessage()" id="chatSendBtn" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold font-mono text-xs transition flex items-center gap-1.5 flex-shrink-0">
+          <button onclick="sendChatMessage()" id="chatSendBtn" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold font-mono text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow-md">
             <span>Send</span>
             <i class="fa-solid fa-arrow-up text-xs"></i>
           </button>
@@ -758,7 +786,7 @@
 
   </main>
 
-  <!-- MOBILE BOTTOM SHEET MODAL -->
+  <!-- MOBILE BOTTOM SHEET MODAL (INCIDENT INSPECTOR) -->
   <div id="mobileInspectorModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex-col justify-end lg:hidden p-3">
     <div class="card-surface rounded-2xl max-w-lg w-full mx-auto border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
       <div class="p-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 rounded-t-2xl">
@@ -771,9 +799,55 @@
     </div>
   </div>
 
-  <!-- FLOATING QUICK CHAT BUTTON -->
-  <button onclick="switchTab('agent')" class="fixed bottom-5 right-5 z-40 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold px-3.5 py-2.5 rounded-full shadow-lg shadow-emerald-950/80 border border-emerald-400/40 transition flex items-center gap-2 font-mono text-xs cursor-pointer">
-    <span class="w-2 h-2 rounded-full bg-emerald-950 animate-ping"></span>
+  <!-- FLOATING QUICK COPILOT DRAWER (ACCESSIBLE FROM ANY PAGE) -->
+  <div id="copilotSidecar" class="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-[#101014] border-l border-zinc-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Sidecar Header -->
+    <div class="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+          <i class="fa-solid fa-robot text-sm"></i>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-white font-mono flex items-center gap-1.5">
+            <span>KARIYA Copilot</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 radar-pulse"></span>
+          </div>
+          <p class="text-[10px] text-zinc-500 font-mono">Autonomous Cyber Assistant</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-1">
+        <button onclick="switchTab('agent'); closeSidecar();" class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-900 text-xs" title="Expand to Full Console">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+        <button onclick="closeSidecar()" class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-900 text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sidecar Chat Stream -->
+    <div id="sidecarMessages" class="flex-1 overflow-y-auto p-3.5 space-y-3 font-mono text-xs">
+      <div class="bg-zinc-900/80 p-3 rounded-lg border border-zinc-800 space-y-1.5 text-zinc-300 text-[11px]">
+        <div class="text-emerald-400 font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved"></i> Quick Assistant
+        </div>
+        <p class="text-zinc-400">Ask any question about Nigerian MDAs, live triage, or competition rubrics from any tab.</p>
+      </div>
+    </div>
+
+    <!-- Sidecar Input -->
+    <div class="p-3 border-t border-zinc-800 bg-zinc-950 flex items-center gap-2">
+      <input type="text" id="sidecarInput" onkeydown="handleSidecarKey(event)" placeholder="Ask KARIYA or type /triage..." class="flex-1 bg-[#09090b] border border-zinc-800 rounded-lg px-3 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500">
+      <button onclick="sendSidecarMessage()" id="sidecarSendBtn" class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold text-xs font-mono">
+        <i class="fa-solid fa-arrow-up"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- FLOATING QUICK CHAT TRIGGER BUTTON -->
+  <button onclick="toggleSidecar()" class="fixed bottom-5 right-5 z-40 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold px-3.5 py-2.5 rounded-full shadow-xl shadow-emerald-950 border border-emerald-400/40 transition flex items-center gap-2 font-mono text-xs cursor-pointer">
+    <span class="w-2 h-2 rounded-full bg-emerald-950 radar-pulse"></span>
     <i class="fa-solid fa-robot text-sm"></i>
     <span class="hidden sm:inline">Ask KARIYA Agent</span>
   </button>
@@ -797,6 +871,7 @@
     let selectedIndex = 0;
     let chartInstances = {};
     let isAgentResponding = false;
+    let isSidecarOpen = false;
 
     function updateClock() {
       const now = new Date();
@@ -814,6 +889,23 @@
       const d = document.getElementById('mobileDrawer');
       d.classList.toggle('hidden');
       d.classList.toggle('flex');
+    }
+
+    function toggleSidecar() {
+      const drawer = document.getElementById('copilotSidecar');
+      isSidecarOpen = !isSidecarOpen;
+      if (isSidecarOpen) {
+        drawer.classList.remove('translate-x-full');
+        setTimeout(() => document.getElementById('sidecarInput').focus(), 150);
+      } else {
+        drawer.classList.add('translate-x-full');
+      }
+    }
+
+    function closeSidecar() {
+      const drawer = document.getElementById('copilotSidecar');
+      drawer.classList.add('translate-x-full');
+      isSidecarOpen = false;
     }
 
     function switchTab(tabId) {
@@ -1079,17 +1171,34 @@
     }
 
     /* ------------------------------------------------------------- */
-    /* AI AGENT INTERACTIVE CHAT ENGINE                              */
+    /* AI AGENT CHAT LOGIC (FOR MAIN CONSOLE & SIDECAR DRAWER)       */
     /* ------------------------------------------------------------- */
     function sendQuickPrompt(promptText) {
       document.getElementById('chatInput').value = promptText;
       sendChatMessage();
     }
 
+    function clearChatMessages() {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = `
+        <div class="text-center py-8 text-zinc-500 font-mono text-xs">
+          <i class="fa-solid fa-shield-halved text-emerald-400 text-base mb-1"></i>
+          <p>Memory cleared. Ask KARIYA anything or click a quick prompt above.</p>
+        </div>
+      `;
+    }
+
     function handleChatKey(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendChatMessage();
+      }
+    }
+
+    function handleSidecarKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendSidecarMessage();
       }
     }
 
@@ -1107,7 +1216,6 @@
       sendBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
       isAgentResponding = true;
 
-      // Add typing placeholder
       const typingId = 'typing-' + Date.now();
       appendTypingIndicator(typingId);
 
@@ -1119,7 +1227,7 @@
         });
         const data = await res.json();
         removeTypingIndicator(typingId);
-        appendChatMessage('agent', data.reply);
+        appendChatMessage('agent', data.reply, data.triage_result);
       } catch (err) {
         removeTypingIndicator(typingId);
         appendChatMessage('agent', `❌ Communication error: ${err.message || err}`);
@@ -1130,7 +1238,52 @@
       }
     }
 
-    function appendChatMessage(role, content) {
+    async function sendSidecarMessage() {
+      const input = document.getElementById('sidecarInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      const container = document.getElementById('sidecarMessages');
+      
+      // User bubble
+      const uDiv = document.createElement('div');
+      uDiv.className = 'bg-zinc-800 text-zinc-100 p-2.5 rounded-lg text-right max-w-[90%] ml-auto leading-relaxed';
+      uDiv.textContent = text;
+      container.appendChild(uDiv);
+      container.scrollTop = container.scrollHeight;
+
+      // Typing
+      const tDiv = document.createElement('div');
+      tDiv.className = 'text-zinc-500 text-[10px] flex items-center gap-1.5 py-1';
+      tDiv.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i> Thinking...`;
+      container.appendChild(tDiv);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        tDiv.remove();
+
+        const aDiv = document.createElement('div');
+        aDiv.className = 'bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-zinc-200 leading-relaxed text-[11px] space-y-1.5';
+        aDiv.innerHTML = formatMarkdown(data.reply);
+        container.appendChild(aDiv);
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        tDiv.remove();
+        const eDiv = document.createElement('div');
+        eDiv.className = 'text-rose-400 text-[10px]';
+        eDiv.textContent = 'Error: ' + err;
+        container.appendChild(eDiv);
+      }
+    }
+
+    function appendChatMessage(role, content, triageData) {
       const container = document.getElementById('chatMessages');
       const isUser = role === 'user';
       
@@ -1144,17 +1297,18 @@
           <div class="bg-zinc-800 text-zinc-100 p-3 rounded-xl rounded-tr-none max-w-[85%] leading-relaxed">
             ${escapeHtml(content)}
           </div>
-          <div class="w-6 h-6 rounded bg-zinc-700 text-zinc-300 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">
+          <div class="w-7 h-7 rounded-lg bg-zinc-700 text-zinc-300 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs">
             <i class="fa-solid fa-user"></i>
           </div>
         `;
       } else {
         msgDiv.innerHTML = `
-          <div class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs border border-emerald-500/30 shadow-sm">
             <i class="fa-solid fa-shield-halved"></i>
           </div>
-          <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2">
+          <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2.5 shadow-sm">
             ${renderedBody}
+            ${triageData ? renderTriageInlineActions(triageData) : ''}
           </div>
         `;
       }
@@ -1163,16 +1317,32 @@
       container.scrollTop = container.scrollHeight;
     }
 
+    function renderTriageInlineActions(data) {
+      return `
+        <div class="mt-2 pt-2.5 border-t border-zinc-800/80 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <button onclick="copyToClipboard('${escapeHtml(data.cleaned_text || '')}', this)" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1">
+            <i class="fa-solid fa-copy text-emerald-400"></i> Copy Sanitized Text
+          </button>
+          <button onclick="switchTab('queue')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1">
+            <i class="fa-solid fa-list-check text-cyan-400"></i> View Active Queue
+          </button>
+          <button onclick="switchTab('dossier')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1">
+            <i class="fa-solid fa-file-export text-purple-400"></i> Generate Dossier
+          </button>
+        </div>
+      `;
+    }
+
     function appendTypingIndicator(id) {
       const container = document.getElementById('chatMessages');
       const div = document.createElement('div');
       div.id = id;
       div.className = 'flex items-center space-x-2 text-zinc-500 text-[11px] font-mono py-1';
       div.innerHTML = `
-        <div class="w-6 h-6 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs">
+        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20">
           <i class="fa-solid fa-circle-notch fa-spin"></i>
         </div>
-        <span>KARIYA Agent is reasoning & running tools...</span>
+        <span>KARIYA is reasoning & running on-device tools...</span>
       `;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
@@ -1193,12 +1363,14 @@
       // inline code
       html = html.replace(/`([^`]+)`/g, '<code class="bg-zinc-950 px-1.5 py-0.5 rounded text-emerald-400 border border-zinc-800">$1</code>');
       // headers
-      html = html.replace(/^### (.*$)/gim, '<div class="text-xs font-bold text-white border-b border-zinc-800 pb-1 mt-2 mb-1">$1</div>');
+      html = html.replace(/^### (.*$)/gim, '<div class="text-xs font-bold text-white border-b border-zinc-800 pb-1 mt-2 mb-1 flex items-center gap-1.5">$1</div>');
       html = html.replace(/^## (.*$)/gim, '<div class="text-sm font-bold text-emerald-400 border-b border-zinc-800 pb-1 mt-2 mb-1">$1</div>');
       // blockquote
-      html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-emerald-500 pl-2 text-zinc-400 italic my-1">$1</blockquote>');
+      html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-emerald-500 pl-2.5 text-zinc-400 italic my-1.5 bg-zinc-950/40 py-1 rounded-r">$1</blockquote>');
       // lists
-      html = html.replace(/^- (.*$)/gim, '<div class="flex items-start gap-1.5 my-0.5"><span class="text-emerald-400">•</span><span>$1</span></div>');
+      html = html.replace(/^- (.*$)/gim, '<div class="flex items-start gap-1.5 my-0.5"><span class="text-emerald-400 font-bold">•</span><span>$1</span></div>');
+      // links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-cyan-400 hover:underline flex-inline items-center gap-1">$1 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>');
       // newlines
       html = html.replace(/\n\n/g, '<br/>');
       return html;
