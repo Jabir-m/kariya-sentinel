@@ -15,7 +15,8 @@ session_history.json
 # Reference & Temporary Files
 servers/
 story.txt
-*.pdf
+competition_doc.pdf
+downloaded_doc.bin
 
 # IDE & OS
 .DS_Store
