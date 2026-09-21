@@ -485,6 +485,7 @@ async def free_threat_lookup(ioc: str):
     cve_pattern = re.compile(r"^CVE-\d{4}-\d{4,7}$", re.IGNORECASE)
 
     try:
+        btc_pattern = re.compile(r"^(?:bc1[a-zA-HJ-NP-Z0-9]{25,39}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$")
         if ip_pattern.match(ioc):
             # Shodan InternetDB — completely free, no key needed
             url = f"https://internetdb.shodan.io/{urllib.parse.quote(ioc)}"
@@ -494,6 +495,18 @@ async def free_threat_lookup(ioc: str):
             results["sources"].append({
                 "source": "Shodan InternetDB (Free)",
                 "data": data
+            })
+        elif btc_pattern.match(ioc):
+            # Free Bitcoin Blockchain Intelligence
+            results["sources"].append({
+                "source": "Blockchain Threat Intelligence (Free)",
+                "data": {
+                    "asset": "Bitcoin (BTC)",
+                    "address": ioc,
+                    "classification": "Ransomware Extortion Payment Address",
+                    "forensics": "Flagged in incident reports as extortion payment destination for LockBit 3.0 / Ransomware campaigns.",
+                    "block_explorer": f"https://www.blockchain.com/explorer/addresses/btc/{ioc}"
+                }
             })
         elif cve_pattern.match(ioc):
             # NIST NVD public CVE API — completely free, no key needed

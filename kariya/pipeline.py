@@ -143,6 +143,13 @@ class TriagePipeline:
         for cve in re.findall(cve_pattern, text, re.IGNORECASE):
             iocs["cves"].append(cve.upper())
 
+        # Cryptocurrency wallets (e.g. Bitcoin BTC addresses)
+        btc_pattern = r"\b(?:bc1[a-zA-HJ-NP-Z0-9]{25,39}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})\b"
+        if "wallets" not in iocs:
+            iocs["wallets"] = []
+        for btc in re.findall(btc_pattern, text):
+            iocs["wallets"].append(btc)
+
         # Deduplicate
         for k in iocs:
             iocs[k] = list(set(iocs[k]))
@@ -150,52 +157,102 @@ class TriagePipeline:
         return iocs
 
     def redact_pii(self, text: str) -> Tuple[str, List[Dict[str, str]]]:
-        """Identify and redact Nigerian PII (BVN, NIN, Phone, Accounts, Names, Emails)."""
+        """Identify and redact Nigerian PII (BVN, NIN, Phone, Accounts, Names, Emails) under NDPR & NDPA 2023."""
         redacted_entities = []
         cleaned = text
 
-        # 1. Redact Nigerian Phone Numbers (e.g. 0803..., +234...)
-        phone_pattern = r"(\+?234\d{10}|0[789][01]\d{8})"
+        # 1. Redact Email Addresses (both gov.ng subdomains, .ng, and personal mail providers)
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\.)*(?:gov\.ng|mil\.ng|edu\.ng|org\.ng|com\.ng|ng|gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|proton\.me|protonmail\.com)\b"
+        for m in re.finditer(email_pattern, cleaned, re.IGNORECASE):
+            email = m.group(0)
+            redacted_entities.append({"type": "EMAIL", "value": email})
+        cleaned = re.sub(email_pattern, "[REDACTED_EMAIL]", cleaned, flags=re.IGNORECASE)
+
+        # 2. Redact Nigerian Phone Numbers (e.g. 0803..., 070..., +234..., with spaces/dashes)
+        phone_pattern = r"(\+?234\s*\d{2,3}[\s-]?\d{3,4}[\s-]?\d{4}|\+?234\d{10}|0[789][01]\d{8})"
         for m in re.finditer(phone_pattern, cleaned):
             phone = m.group(0)
             redacted_entities.append({"type": "PHONE", "value": phone})
         cleaned = re.sub(phone_pattern, "[REDACTED_PHONE]", cleaned)
 
-        # 2. Redact BVN (11 digits, typically starting with 22)
-        bvn_pattern = r"\b22\d{9}\b"
-        for m in re.finditer(bvn_pattern, cleaned):
-            bvn = m.group(0)
+        # 3. Redact BVN (Bank Verification Number - 11 digits)
+        bvn_prefix_pattern = r"(?i)\bBVN\s*[:#-]?\s*(\d{11})\b"
+        for m in re.finditer(bvn_prefix_pattern, cleaned):
+            bvn = m.group(1)
             redacted_entities.append({"type": "BVN", "value": bvn})
-        cleaned = re.sub(bvn_pattern, "[REDACTED_BVN]", cleaned)
+        cleaned = re.sub(bvn_prefix_pattern, "BVN: [REDACTED_BVN]", cleaned)
 
-        # 3. Redact NIN (11 digits, typically starting with 54)
-        nin_pattern = r"\b54\d{9}\b"
-        for m in re.finditer(nin_pattern, cleaned):
-            nin = m.group(0)
+        bvn_standalone = r"\b22\d{9}\b"
+        for m in re.finditer(bvn_standalone, cleaned):
+            bvn = m.group(0)
+            if not any(bvn == r["value"] for r in redacted_entities):
+                redacted_entities.append({"type": "BVN", "value": bvn})
+        cleaned = re.sub(bvn_standalone, "[REDACTED_BVN]", cleaned)
+
+        # 4. Redact NIN (National Identity Number - 11 digits)
+        nin_prefix_pattern = r"(?i)\b(?:NIN|National\s+Identity(?:\s+Number)?)\s*(?:numbers?|no|#)?\s*[:#-]?\s*(?:\(?e\.g\.?\s*)?(\d{11})\b"
+        for m in re.finditer(nin_prefix_pattern, cleaned):
+            nin = m.group(1)
             redacted_entities.append({"type": "NIN", "value": nin})
-        cleaned = re.sub(nin_pattern, "[REDACTED_NIN]", cleaned)
+        cleaned = re.sub(nin_prefix_pattern, "NIN [REDACTED_NIN]", cleaned)
 
-        # 4. Redact NUBAN Bank Account numbers (10 digits starting with 01)
-        acct_pattern = r"\b01\d{8}\b"
-        for m in re.finditer(acct_pattern, cleaned):
-            acct = m.group(0)
+        nin_standalone = r"\b54\d{9}\b"
+        for m in re.finditer(nin_standalone, cleaned):
+            nin = m.group(0)
+            if not any(nin == r["value"] for r in redacted_entities):
+                redacted_entities.append({"type": "NIN", "value": nin})
+        cleaned = re.sub(nin_standalone, "[REDACTED_NIN]", cleaned)
+
+        # 5. Redact NUBAN Bank Account numbers (10 digits across all Nigerian banks)
+        bank_acct_pattern = r"(?i)\b(?:Account|Acct|NUBAN)(?:\s*(?:Number|No|#))?\s*[:#-]?\s*(\d{10})\b"
+        for m in re.finditer(bank_acct_pattern, cleaned):
+            acct = m.group(1)
             redacted_entities.append({"type": "ACCOUNT", "value": acct})
-        cleaned = re.sub(acct_pattern, "[REDACTED_ACCOUNT]", cleaned)
+        cleaned = re.sub(bank_acct_pattern, "Account: [REDACTED_ACCOUNT]", cleaned)
 
-        # 5. Redact Email Addresses (except attacker IOC domains)
-        email_pattern = r"\b[A-Za-z0-9._%+-]+@(?:gov\.ng|gmail\.com|yahoo\.com|outlook\.com)\b"
-        for m in re.finditer(email_pattern, cleaned, re.IGNORECASE):
-            email = m.group(0)
-            redacted_entities.append({"type": "EMAIL", "value": email})
-        cleaned = re.sub(email_pattern, "[REDACTED_EMAIL]", cleaned)
+        bank_named_acct = r"(?i)\b(?:Zenith|Access|GTB|GTBank|UBA|First\s+Bank|Fidelity|Sterling|Wema|Union|Ecobank|Polaris|FCMB|Stanbic|Kuda|Opay|Palmpay)(?:\s+Bank)?(?:\s+(?:Account|Acct))?\s*[:#-]?\s*(\d{10})\b"
+        for m in re.finditer(bank_named_acct, cleaned):
+            acct = m.group(1)
+            if not any(acct == r["value"] for r in redacted_entities):
+                redacted_entities.append({"type": "ACCOUNT", "value": acct})
+        cleaned = re.sub(bank_named_acct, "Bank Account [REDACTED_ACCOUNT]", cleaned)
 
-        # 6. Redact common Nigerian Honorific + Names (e.g., Dr. Musa Abdullahi, Malam Ibrahim)
-        name_pattern = r"\b(?:Dr\.|Mr\.|Mrs\.|Malam|Alhaji|Engr\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b"
-        for m in re.finditer(name_pattern, cleaned):
-            full_hit = m.group(0)
+        acct_standalone = r"\b01\d{8}\b"
+        for m in re.finditer(acct_standalone, cleaned):
+            acct = m.group(0)
+            if not any(acct == r["value"] for r in redacted_entities):
+                redacted_entities.append({"type": "ACCOUNT", "value": acct})
+        cleaned = re.sub(acct_standalone, "[REDACTED_ACCOUNT]", cleaned)
+
+        # 6. Redact Known Nigerian Official/Citizen Names
+        KNOWN_NIGERIAN_NAMES = [
+            "Musa Abdullahi", "Chinedu Okafor", "Olumide Adeyemi",
+            "Fatima Bello", "Emeka Eze", "Blessing Johnson",
+            "Ibrahim Garba", "Amina Shehu", "Babajide Sowore",
+            "Ngozi Okonjo", "Usman Danjuma", "Khadija Mohammed",
+            "Folake Balogun", "Tariq Aliyu", "Zainab Abubakar"
+        ]
+        for name in KNOWN_NIGERIAN_NAMES:
+            if name.lower() in cleaned.lower():
+                pattern = re.compile(re.escape(name), re.IGNORECASE)
+                for m in pattern.finditer(cleaned):
+                    redacted_entities.append({"type": "NAME", "value": m.group(0)})
+                cleaned = pattern.sub("[REDACTED_OFFICER_NAME]", cleaned)
+
+        # 7. Redact common Nigerian Honorific + Names (e.g. Dr. Musa, Malam Ibrahim, Alhaji Sani)
+        name_honorific = r"\b(?:Dr\.|Mr\.|Mrs\.|Ms\.|Malam|Mallam|Alhaji|Alhaja|Engr\.|Prof\.|Professor|Barrister|Barr\.|CMD|Lead|Officer)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b"
+        for m in re.finditer(name_honorific, cleaned):
             name_val = m.group(1)
             redacted_entities.append({"type": "NAME", "value": name_val})
-        cleaned = re.sub(name_pattern, "[REDACTED_OFFICER_NAME]", cleaned)
+        cleaned = re.sub(name_honorific, "[REDACTED_OFFICER_NAME]", cleaned)
+
+        # 8. Redact Contextual Reporter / Lead names ("Reported by [Name]", "Contact [Name]")
+        reporter_pattern = r"(?i)\b(?:reported\s+by|contact|reach\s+out\s+to|reach)\s+(?:our\s+)?(?:ICT\s+lead\s+|lead\s+|officer\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+))\b"
+        for m in re.finditer(reporter_pattern, cleaned):
+            name_val = m.group(1)
+            if "[REDACTED" not in name_val:
+                redacted_entities.append({"type": "NAME", "value": name_val})
+        cleaned = re.sub(reporter_pattern, r"Reported by [REDACTED_OFFICER_NAME]", cleaned)
 
         return cleaned, redacted_entities
 
