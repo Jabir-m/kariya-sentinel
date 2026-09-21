@@ -1,7 +1,23 @@
+# Python & Environments
 env/
+venv/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+
+# Local Databases & State
 *.db
+*.sqlite3
 session_history.json
 .system_generated/
+
+# Reference & Temporary Files
+servers/
+story.txt
+*.pdf
+
+# IDE & OS
+.DS_Store
+.vscode/
+.idea/
