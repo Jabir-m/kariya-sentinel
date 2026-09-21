@@ -260,7 +260,7 @@
   </header>
 
   <!-- MOBILE RESPONSIVE NAVIGATION DRAWER -->
-  <div id="mobileDrawer" onclick="if(event.target.id === 'mobileDrawer') toggleMobileNav();" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex-col justify-end transition-opacity duration-300">
+  <div id="mobileDrawer" style="display: none;" onclick="if(event.target.id === 'mobileDrawer') toggleMobileNav();" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex-col justify-end transition-opacity duration-300">
     <div class="bg-[#101014] border-t border-zinc-700 rounded-t-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl animate-slide-in">
       
       <!-- Drawer Header -->
@@ -372,54 +372,72 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5 flex-1 w-full space-y-5">
 
-    <!-- KPI SUMMARY STRIP -->
+    <!-- KPI SUMMARY STRIP (CLICKABLE INTERACTIVE CONTROL BOXES) -->
     <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       
-      <div class="card-surface rounded-xl p-3.5 flex flex-col justify-between">
-        <span class="text-xs font-medium text-zinc-400">Total Inflow</span>
+      <div onclick="filterQueueBySeverity('ALL')" class="card-surface rounded-xl p-3.5 flex flex-col justify-between cursor-pointer hover:border-emerald-500/60 hover:bg-zinc-900/90 transition hover-lift group" title="Click to view all 360 inflow incidents">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 transition">Total Inflow</span>
+          <i class="fa-solid fa-list-check text-[10px] text-zinc-600 group-hover:text-emerald-400 transition"></i>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span id="kpiRaw" class="text-xl font-bold font-mono text-white">360</span>
-          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded">100% Parsed</span>
+          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">100% Parsed</span>
         </div>
       </div>
 
-      <div class="card-surface rounded-xl p-3.5 flex flex-col justify-between">
-        <span class="text-xs font-medium text-zinc-400">Unique Clusters</span>
+      <div onclick="filterQueueBySeverity('ALL')" class="card-surface rounded-xl p-3.5 flex flex-col justify-between cursor-pointer hover:border-emerald-500/60 hover:bg-zinc-900/90 transition hover-lift group" title="Click to inspect all 15 unique campaigns">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 transition">Unique Clusters</span>
+          <i class="fa-solid fa-layer-group text-[10px] text-zinc-600 group-hover:text-emerald-400 transition"></i>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span id="kpiClusters" class="text-xl font-bold font-mono text-emerald-400">15</span>
-          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded">95.8% Dedup</span>
+          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">95.8% Dedup</span>
         </div>
       </div>
 
-      <div class="card-surface rounded-xl p-3.5 flex flex-col justify-between">
-        <span class="text-xs font-medium text-rose-400">P1 Critical SLAs</span>
+      <div onclick="filterQueueBySeverity('Critical')" class="card-surface rounded-xl p-3.5 flex flex-col justify-between cursor-pointer hover:border-rose-500/60 hover:bg-zinc-900/90 transition hover-lift group" title="Click to filter queue by P1 Critical incidents (15m SLA)">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-rose-400 group-hover:text-rose-300 transition">P1 Critical SLAs</span>
+          <i class="fa-solid fa-triangle-exclamation text-[10px] text-rose-600 group-hover:text-rose-400 transition"></i>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span id="kpiCritical" class="text-xl font-bold font-mono text-rose-400">6</span>
-          <span class="text-[10px] font-mono text-rose-300 bg-rose-950/80 px-1.5 py-0.5 rounded">15m Window</span>
+          <span class="text-[10px] font-mono text-rose-300 bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-500/40">15m Window</span>
         </div>
       </div>
 
-      <div class="card-surface rounded-xl p-3.5 flex flex-col justify-between">
-        <span class="text-xs font-medium text-zinc-400">NDPR PII Scrubbed</span>
+      <div onclick="filterQueueByPii()" class="card-surface rounded-xl p-3.5 flex flex-col justify-between cursor-pointer hover:border-cyan-500/60 hover:bg-zinc-900/90 transition hover-lift group" title="Click to inspect NDPR PII scrubbed incidents (BVN, NIN)">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-zinc-400 group-hover:text-cyan-300 transition">NDPR PII Scrubbed</span>
+          <i class="fa-solid fa-user-shield text-[10px] text-zinc-600 group-hover:text-cyan-400 transition"></i>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span id="kpiPii" class="text-xl font-bold font-mono text-cyan-300">100%</span>
-          <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded">Zero Leak</span>
+          <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">Zero Leak</span>
         </div>
       </div>
 
-      <div class="card-surface rounded-xl p-3.5 flex flex-col justify-between">
-        <span class="text-xs font-medium text-zinc-400">Threat IOCs</span>
+      <div onclick="switchTab('analytics')" class="card-surface rounded-xl p-3.5 flex flex-col justify-between cursor-pointer hover:border-purple-500/60 hover:bg-zinc-900/90 transition hover-lift group" title="Click to open Threat Intelligence Analytics">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-zinc-400 group-hover:text-purple-300 transition">Threat IOCs</span>
+          <i class="fa-solid fa-chart-pie text-[10px] text-zinc-600 group-hover:text-purple-400 transition"></i>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span id="kpiIoc" class="text-xl font-bold font-mono text-purple-300">428</span>
-          <span class="text-[10px] font-mono text-purple-400 bg-purple-950/60 px-1.5 py-0.5 rounded">STIX / IP / Hash</span>
+          <span class="text-[10px] font-mono text-purple-400 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-500/30">STIX / IP / Hash</span>
         </div>
       </div>
 
-      <div class="card-surface rounded-xl p-3.5 flex flex-col justify-between">
-        <span class="text-xs font-medium text-zinc-400">Offline SQLite Buffer</span>
+      <div onclick="switchTab('architecture')" class="card-surface rounded-xl p-3.5 flex flex-col justify-between cursor-pointer hover:border-amber-500/60 hover:bg-zinc-900/90 transition hover-lift group" title="Click to view Rule 06 Sovereign Offline Spec">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-zinc-400 group-hover:text-amber-300 transition">Offline SQLite Buffer</span>
+          <i class="fa-solid fa-server text-[10px] text-zinc-600 group-hover:text-amber-400 transition"></i>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span id="kpiOffline" class="text-xl font-bold font-mono text-amber-300">0</span>
-          <span id="kpiOfflineTag" class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded">Synced</span>
+          <span id="kpiOfflineTag" class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/30">Synced</span>
         </div>
       </div>
 
@@ -1224,8 +1242,8 @@
   </main>
 
   <!-- MOBILE BOTTOM SHEET MODAL (INCIDENT INSPECTOR) -->
-  <div id="mobileInspectorModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex-col justify-end lg:hidden p-3">
-    <div class="card-surface rounded-2xl max-w-lg w-full mx-auto border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+  <div id="mobileInspectorModal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex-col justify-end lg:hidden p-3 pointer-events-none">
+    <div class="card-surface rounded-2xl max-w-lg w-full mx-auto border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden pointer-events-auto">
       <div class="p-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 rounded-t-2xl">
         <span class="text-xs font-bold text-white font-mono" id="mobileModalHeader">Incident Inspector</span>
         <button onclick="closeMobileInspector()" class="p-1 text-zinc-400 hover:text-white">
@@ -1237,8 +1255,8 @@
   </div>
 
   <!-- FREE THREAT INTEL MODAL (SHODAN / NIST NVD / IP-API) -->
-  <div id="threatModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-3">
-    <div class="card-surface rounded-2xl max-w-xl w-full mx-auto border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+  <div id="threatModal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-3 pointer-events-none">
+    <div class="card-surface rounded-2xl max-w-xl w-full mx-auto border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden pointer-events-auto">
       <div class="p-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 rounded-t-2xl">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-shield-virus text-emerald-400"></i>
@@ -1258,7 +1276,7 @@
   </div>
 
   <!-- FLOATING QUICK COPILOT DRAWER (ACCESSIBLE FROM ANY PAGE) -->
-  <div id="copilotSidecar" class="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-[#101014] border-l border-zinc-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+  <div id="copilotSidecar" style="display: none;" class="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-[#101014] border-l border-zinc-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col pointer-events-none">
     <!-- Sidecar Header -->
     <div class="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
       <div class="flex items-center space-x-2.5">
@@ -1351,25 +1369,68 @@
 
     function toggleMobileNav() {
       const d = document.getElementById('mobileDrawer');
-      d.classList.toggle('hidden');
-      d.classList.toggle('flex');
+      if (!d) return;
+      if (d.style.display === 'none' || d.style.display === '' || d.classList.contains('hidden')) {
+        d.style.display = 'flex';
+        d.classList.remove('hidden');
+      } else {
+        d.style.display = 'none';
+        d.classList.add('hidden');
+      }
     }
 
     function toggleSidecar() {
       const drawer = document.getElementById('copilotSidecar');
+      if (!drawer) return;
       isSidecarOpen = !isSidecarOpen;
       if (isSidecarOpen) {
-        drawer.classList.remove('translate-x-full');
-        setTimeout(() => document.getElementById('sidecarInput').focus(), 150);
+        drawer.style.display = 'flex';
+        setTimeout(() => {
+          drawer.classList.remove('translate-x-full', 'pointer-events-none');
+          drawer.classList.add('pointer-events-auto');
+          const input = document.getElementById('sidecarInput');
+          if (input) input.focus();
+        }, 10);
       } else {
-        drawer.classList.add('translate-x-full');
+        drawer.classList.add('translate-x-full', 'pointer-events-none');
+        drawer.classList.remove('pointer-events-auto');
+        setTimeout(() => {
+          if (!isSidecarOpen) drawer.style.display = 'none';
+        }, 300);
       }
     }
 
     function closeSidecar() {
       const drawer = document.getElementById('copilotSidecar');
-      drawer.classList.add('translate-x-full');
+      if (!drawer) return;
       isSidecarOpen = false;
+      drawer.classList.add('translate-x-full', 'pointer-events-none');
+      drawer.classList.remove('pointer-events-auto');
+      setTimeout(() => {
+        if (!isSidecarOpen) drawer.style.display = 'none';
+      }, 300);
+    }
+
+    function filterQueueBySeverity(sev) {
+      switchTab('queue');
+      const sevSelect = document.getElementById('filterSeverity');
+      if (sevSelect) sevSelect.value = sev;
+      const qInput = document.getElementById('incidentSearch');
+      if (qInput) qInput.value = '';
+      const typeSelect = document.getElementById('filterType');
+      if (typeSelect) typeSelect.value = 'ALL';
+      filterIncidents();
+    }
+
+    function filterQueueByPii() {
+      switchTab('queue');
+      const qInput = document.getElementById('incidentSearch');
+      if (qInput) qInput.value = 'BVN';
+      const sevSelect = document.getElementById('filterSeverity');
+      if (sevSelect) sevSelect.value = 'ALL';
+      const typeSelect = document.getElementById('filterType');
+      if (typeSelect) typeSelect.value = 'ALL';
+      filterIncidents();
     }
 
     function switchTab(tabId) {
@@ -1648,14 +1709,14 @@
         </div>
       `;
       const m = document.getElementById('mobileInspectorModal');
-      m.classList.remove('hidden');
-      m.classList.add('flex');
+      m.style.display = 'flex';
+      m.classList.remove('hidden', 'pointer-events-none');
     }
 
     function closeMobileInspector() {
       const m = document.getElementById('mobileInspectorModal');
-      m.classList.add('hidden');
-      m.classList.remove('flex');
+      m.style.display = 'none';
+      m.classList.add('hidden', 'pointer-events-none');
     }
 
     function renderIocChips(iocs) {
@@ -1702,8 +1763,8 @@
       const body = document.getElementById('threatModalBody');
 
       header.textContent = `Threat Intel: ${ioc}`;
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
+      modal.style.display = 'flex';
+      modal.classList.remove('hidden', 'pointer-events-none');
 
       body.innerHTML = `
         <div class="text-center py-8 text-zinc-400 font-mono text-xs">
