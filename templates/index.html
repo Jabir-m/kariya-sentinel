@@ -114,30 +114,62 @@
     .animate-confidence {
       animation: confidenceFill 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    /* AI Avatar Emotional Animation Classes */
+    @keyframes avatarOrbitSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .avatar-spin-slow {
+      animation: avatarOrbitSpin 12s linear infinite;
+    }
+    .avatar-spin-fast {
+      animation: avatarOrbitSpin 1.6s linear infinite;
+    }
+    .avatar-spin-reverse {
+      animation: avatarOrbitSpin 2.4s linear infinite reverse;
+    }
+
+    @keyframes avatarPulseAlert {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6)); }
+      50% { transform: scale(1.1); filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.9)); }
+    }
+    .avatar-pulse-alert {
+      animation: avatarPulseAlert 1.2s ease-in-out infinite;
+    }
+
+    @keyframes avatarPulseVigilant {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.35)); }
+      50% { transform: scale(1.04); filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.65)); }
+    }
+    .avatar-pulse-vigilant {
+      animation: avatarPulseVigilant 3s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans text-sm selection:bg-emerald-500/20 selection:text-emerald-300">
 
   <!-- TOP APP NAVIGATION -->
   <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80">
-    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-3">
       
       <!-- Brand & Track -->
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-          <i class="fa-solid fa-shield-halved text-sm"></i>
+      <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 relative">
+          <i id="navBrandIcon" class="fa-solid fa-shield-halved text-sm"></i>
+          <span id="navEmotionDot" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 radar-pulse" title="AI Sentinel Core: Vigilant"></span>
         </div>
         <div>
-          <div class="flex items-center space-x-2">
-            <span class="font-bold tracking-tight text-white text-base">Kariya<span class="text-emerald-400">Sentinel</span></span>
-            <span class="hidden sm:inline-block text-zinc-600">/</span>
-            <span class="hidden sm:inline-block text-xs font-mono text-zinc-400">Track D: Government & Public Sector</span>
+          <div class="flex items-center space-x-1 sm:space-x-2">
+            <span class="font-bold tracking-tight text-white text-sm sm:text-base">Kariya<span class="text-emerald-400">Sentinel</span></span>
+            <span class="hidden md:inline-block text-zinc-600">/</span>
+            <span class="hidden md:inline-block text-xs font-mono text-zinc-400">Track D: Gov &amp; Public Sector</span>
           </div>
         </div>
       </div>
 
       <!-- Builder OS Team Attribution (Desktop) -->
-      <div class="hidden lg:flex items-center space-x-2 text-xs font-mono bg-zinc-900/90 border border-zinc-800 rounded-md px-3 py-1">
+      <div class="hidden xl:flex items-center space-x-2 text-xs font-mono bg-zinc-900/90 border border-zinc-800 rounded-md px-3 py-1">
         <span class="text-zinc-500 font-bold">Team Builder OS:</span>
         <span class="text-emerald-300 font-semibold">Jabir Mustafa Sulaiman (Lead)</span>
         <span class="text-zinc-600">•</span>
@@ -147,26 +179,27 @@
       </div>
 
       <!-- Live Actions & Status -->
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-1.5 sm:space-x-2">
         <!-- Live Agent Interactive Button -->
-        <button onclick="switchTab('agent')" class="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-md text-xs font-mono hover:bg-emerald-900/70 transition shadow-sm" title="Talk directly to KARIYA Autonomous Agent">
+        <button onclick="switchTab('agent')" class="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-2.5 py-1.5 rounded-md text-xs font-mono hover:bg-emerald-900/70 transition shadow-sm hover-lift" title="Talk directly to KARIYA Autonomous Agent">
           <span class="w-2 h-2 rounded-full bg-emerald-400 radar-pulse"></span>
-          <span class="font-semibold">Talk to Agent</span>
+          <span class="font-semibold hidden sm:inline">Talk to Agent</span>
+          <span class="font-semibold sm:hidden">Agent</span>
         </button>
 
-        <button id="offlineToggleBtn" onclick="toggleOfflineMode()" class="px-2.5 py-1 rounded-md text-xs font-mono transition flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300" title="Simulate Offline Power/Fiber Failure (Rule 06)">
+        <button id="offlineToggleBtn" onclick="toggleOfflineMode()" class="px-2 sm:px-2.5 py-1.5 rounded-md text-xs font-mono transition flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover-lift" title="Simulate Offline Power/Fiber Failure (Rule 06)">
           <span id="networkDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span id="networkText" class="hidden xs:inline">Online Grid</span>
-          <span class="text-[10px] text-zinc-500 bg-zinc-950 px-1 py-0.5 rounded">Rule 06</span>
+          <span id="networkText" class="hidden md:inline">Online Grid</span>
+          <span class="text-[10px] text-zinc-500 bg-zinc-950 px-1 py-0.5 rounded hidden xs:inline">Rule 06</span>
         </button>
 
-        <button onclick="refreshDashboard()" class="p-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition" title="Refresh Telemetry">
+        <button onclick="refreshDashboard()" class="p-2 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition hover-lift" title="Refresh Telemetry">
           <i id="refreshIcon" class="fa-solid fa-rotate text-xs"></i>
         </button>
 
-        <!-- Mobile Menu Toggle -->
-        <button onclick="toggleMobileNav()" class="md:hidden p-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800">
-          <i class="fa-solid fa-bars text-xs"></i>
+        <!-- Mobile Menu Toggle Button -->
+        <button onclick="toggleMobileNav()" id="mobileNavToggleBtn" class="md:hidden p-2 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 transition" aria-label="Open Navigation Menu">
+          <i class="fa-solid fa-bars-staggered text-xs"></i>
         </button>
       </div>
 
@@ -226,27 +259,111 @@
     </div>
   </header>
 
-  <!-- MOBILE SLIDE-OVER TEAM DRAWER -->
-  <div id="mobileDrawer" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex-col justify-end">
-    <div class="bg-[#121215] border-t border-zinc-800 rounded-t-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+  <!-- MOBILE RESPONSIVE NAVIGATION DRAWER -->
+  <div id="mobileDrawer" onclick="if(event.target.id === 'mobileDrawer') toggleMobileNav();" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex-col justify-end transition-opacity duration-300">
+    <div class="bg-[#101014] border-t border-zinc-700 rounded-t-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl animate-slide-in">
+      
+      <!-- Drawer Header -->
       <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-        <span class="font-bold text-white text-sm">Competition Credentials</span>
-        <button onclick="toggleMobileNav()" class="text-zinc-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark text-sm"></i>
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+            <i class="fa-solid fa-shield-halved text-xs"></i>
+          </div>
+          <div>
+            <span class="font-bold text-white text-sm font-mono">KARIYA Sentinel</span>
+            <span class="text-[10px] text-zinc-400 block font-mono">Track D Navigation &amp; Mission Control</span>
+          </div>
+        </div>
+        <button onclick="toggleMobileNav()" class="text-zinc-400 hover:text-white p-2 rounded-lg hover:bg-zinc-900">
+          <i class="fa-solid fa-xmark text-base"></i>
         </button>
       </div>
 
-      <div class="space-y-2 text-xs font-mono">
-        <div class="text-zinc-400">ICSC 2026 Universities Hackathon • Track D: Government & Public Sector</div>
-        <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-800 space-y-1.5">
-          <div class="text-emerald-400 font-bold">TEAM BUILDER OS:</div>
-          <div class="text-zinc-200">1. Jabir Mustafa Sulaiman <span class="text-emerald-400 font-semibold">[Team Lead]</span></div>
-          <div class="text-zinc-300">2. Ahamad Musa</div>
-          <div class="text-zinc-300">3. Halima Lawal</div>
+      <!-- Current AI Emotional State Card in Mobile Menu -->
+      <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-3 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div id="mobileAvatarCore" class="w-8 h-8 rounded-lg bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+            <i id="mobileAvatarIcon" class="fa-solid fa-shield-halved text-xs"></i>
+          </div>
+          <div>
+            <span id="mobileEmotionTitle" class="text-xs font-bold text-white font-mono block">🟢 Vigilant Sentinel</span>
+            <span id="mobileEmotionSub" class="text-[10px] text-zinc-400 font-mono">Monitoring Nigerian MDAs</span>
+          </div>
+        </div>
+        <button onclick="switchTab('agent'); toggleMobileNav();" class="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 px-2.5 py-1 rounded text-xs font-bold font-mono">
+          Talk Now
+        </button>
+      </div>
+
+      <!-- Full Responsive Navigation Grid -->
+      <div class="space-y-1.5 font-mono text-xs">
+        <div class="text-[10px] uppercase font-bold text-zinc-500 px-1 mb-1">Platform Views</div>
+        
+        <button onclick="switchTab('queue'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-emerald-400"></i> 1. Incidents Queue &amp; Inspector</span>
+          <span class="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] text-zinc-400">360 Reports</span>
+        </button>
+
+        <button onclick="switchTab('agent'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-robot text-emerald-400"></i> 2. KARIYA Agent Console</span>
+          <span class="bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[10px]">SOAR Active</span>
+        </button>
+
+        <button onclick="switchTab('sandbox'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-terminal text-amber-400"></i> 3. Live Triage Simulator</span>
+          <span class="bg-amber-950 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded text-[10px]">5-Stage NLP</span>
+        </button>
+
+        <button onclick="switchTab('strategy'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-diagram-project text-cyan-400"></i> 4. Architecture &amp; Playbook</span>
+          <span class="text-zinc-500 text-[10px]">SOAR Spec</span>
+        </button>
+
+        <button onclick="switchTab('analytics'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-chart-simple text-purple-400"></i> 5. Threat Analytics</span>
+          <span class="text-zinc-500 text-[10px]">Charts &amp; Visuals</span>
+        </button>
+
+        <button onclick="switchTab('error_analysis'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-microscope text-rose-400"></i> 6. Rule 05: Benchmark Audit</span>
+          <span class="bg-rose-950 text-rose-300 px-1.5 py-0.5 rounded text-[10px]">100% Accuracy</span>
+        </button>
+
+        <button onclick="switchTab('architecture'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-server text-emerald-400"></i> 7. Rule 06: Zero-Cloud Spec</span>
+          <span class="text-emerald-400 text-[10px]">SQLite WAL</span>
+        </button>
+
+        <button onclick="switchTab('dossier'); toggleMobileNav();" class="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 text-zinc-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-file-export text-zinc-400"></i> 8. Statutory Export (ngCERT)</span>
+          <span class="text-zinc-500 text-[10px]">Print/PDF</span>
+        </button>
+      </div>
+
+      <!-- Quick System Controls -->
+      <div class="pt-2 border-t border-zinc-800 grid grid-cols-2 gap-2 font-mono text-xs">
+        <button onclick="toggleOfflineMode(); toggleMobileNav();" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-lg text-zinc-300 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-bolt text-amber-400"></i>
+          <span>Rule 06 Cut</span>
+        </button>
+        <button onclick="refreshDashboard(); toggleMobileNav();" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-lg text-zinc-300 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-rotate text-emerald-400"></i>
+          <span>Sync Data</span>
+        </button>
+      </div>
+
+      <!-- Team Builder OS Attribution Card -->
+      <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 font-mono text-xs space-y-1">
+        <div class="text-emerald-400 font-bold flex items-center justify-between">
+          <span>TEAM BUILDER OS (TRACK D)</span>
+          <span class="text-[10px] text-zinc-500">ICSC 2026</span>
+        </div>
+        <div class="text-[11px] text-zinc-400">
+          Jabir Mustafa Sulaiman (Lead) • Ahamad Musa • Halima Lawal
         </div>
       </div>
 
-      <button onclick="toggleMobileNav()" class="w-full py-2.5 rounded-lg bg-zinc-800 text-zinc-200 font-mono text-xs font-medium">
+      <button onclick="toggleMobileNav()" class="w-full py-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-mono text-xs font-semibold transition">
         Close Menu
       </button>
     </div>
@@ -414,114 +531,245 @@
     <!-- ============================================================ -->
     <div id="tabContent-agent" class="tab-view hidden space-y-4">
       
-      <div class="card-surface rounded-xl p-4 sm:p-6 border-emerald-500/30 flex flex-col h-[75vh] shadow-xl">
-        
-        <!-- Agent Header & Vitals -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3.5 mb-2">
-          <div class="flex items-center space-x-3">
-            <div class="relative">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600/30 to-teal-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shadow-md neural-glow">
-                <i class="fa-solid fa-robot text-lg"></i>
-              </div>
-              <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-zinc-950 radar-pulse"></span>
+      <!-- Top Alert / Quick Control Header for Mobile & Desktop -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-zinc-900/70 border border-zinc-800 rounded-xl p-3 sm:px-4">
+        <div class="flex items-center space-x-3">
+          <!-- Animated Emotional Avatar Core -->
+          <div class="relative flex items-center justify-center">
+            <!-- Orbiting Gyro Ring -->
+            <div id="agentAvatarRing" class="w-11 h-11 rounded-xl border border-dashed border-emerald-500/50 avatar-spin-slow absolute"></div>
+            <!-- Core Icon Box -->
+            <div id="agentAvatarCore" class="w-9 h-9 rounded-lg bg-emerald-950 border border-emerald-500/60 flex items-center justify-center text-emerald-400 shadow-md transition-all duration-300 avatar-pulse-vigilant">
+              <i id="agentAvatarIcon" class="fa-solid fa-shield-halved text-sm transition-all duration-300"></i>
             </div>
-            <div>
-              <div class="flex items-center space-x-2">
-                <span class="font-bold text-white font-mono text-sm tracking-wide">KARIYA SENTINEL AGENT</span>
-                <span class="text-[10px] font-mono text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/40 font-semibold">Autonomous SOAR</span>
-              </div>
-              <p class="text-[11px] text-zinc-400 font-mono mt-0.5">National Incident Handler for Nigerian Public Sector • Developed by Builder OS</p>
+            <span id="agentRadarDot" class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-zinc-950 radar-pulse"></span>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-white font-mono text-sm tracking-wide">KARIYA SENTINEL AGENT</span>
+              <span id="agentEmotionBadge" class="text-[10px] font-mono text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/40 font-semibold transition-all">🟢 Vigilant Sentinel</span>
+            </div>
+            <p id="agentEmotionSubtext" class="text-[11px] text-zinc-400 font-mono mt-0.5 transition-all">Perimeter scan active • Standing guard over Nigerian Public Sector (Track D)</p>
+          </div>
+        </div>
+
+        <!-- Quick Status & Mission Control Toggle for Mobile -->
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end text-xs font-mono">
+          <div class="hidden md:flex items-center gap-1.5 bg-emerald-950/30 border border-emerald-500/30 px-2.5 py-1 rounded text-[10px] text-emerald-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 radar-pulse"></span>
+            <span id="neuralLinkText">NEURAL LINK ACTIVE</span>
+            <div class="flex items-end gap-0.5 h-3 ml-1">
+              <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-1"></div>
+              <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-2"></div>
+              <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-3"></div>
+              <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-4"></div>
             </div>
           </div>
 
-          <!-- Capability Badges & Controls -->
-          <div class="flex items-center space-x-2 text-xs font-mono">
-            <!-- Neural Audio/Reasoning Visualizer -->
-            <div class="hidden md:flex items-center gap-1.5 bg-emerald-950/30 border border-emerald-500/30 px-2.5 py-1 rounded text-[10px] text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 radar-pulse"></span>
-              <span>NEURAL LINK</span>
-              <div class="flex items-end gap-0.5 h-3 ml-1">
-                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-1"></div>
-                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-2"></div>
-                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-3"></div>
-                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-4"></div>
-              </div>
-            </div>
+          <button onclick="toggleAgentControlPanel()" class="xl:hidden px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 transition text-xs font-mono flex items-center gap-1.5">
+            <i class="fa-solid fa-sliders text-xs"></i>
+            <span>Mission Control</span>
+          </button>
+        </div>
+      </div>
 
-            <div class="hidden lg:flex items-center space-x-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded text-[10px] text-zinc-400">
-              <span>Gemma 4 31B</span>
-              <span class="text-zinc-600">•</span>
-              <span>NDPA 2023 Scrubber</span>
-            </div>
-
-            <button onclick="clearChatMessages()" class="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition text-[11px] hover-lift" title="Clear Conversation Memory">
-              <i class="fa-solid fa-trash-can mr-1"></i> Clear
+      <!-- Main Layout: 8 Cols Chat Stream + 4 Cols Agent Mission Control Center -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        
+        <!-- Left: Chat Stream & Interactive Prompting (8 cols on XL) -->
+        <div class="xl:col-span-8 card-surface rounded-xl p-4 sm:p-5 border-emerald-500/30 flex flex-col h-[76vh] shadow-xl">
+          
+          <!-- Quick Action Prompt Chips -->
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 text-[11px] font-mono text-zinc-300 border-b border-zinc-800/60 mb-2">
+            <span class="text-zinc-500 text-[10px] uppercase font-bold mr-1 flex-shrink-0"><i class="fa-solid fa-bolt text-emerald-400 mr-1"></i>Quick Actions:</span>
+            <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300 hover-lift">
+              ⚡ Triage Pidgin Ransomware
+            </button>
+            <button onclick="sendQuickPrompt('/triage IPPIS ALERT: 40 ghost worker accounts inserted into Federal Ministry of Agriculture payroll. Beneficiary Zenith Bank 2088192039. Attacker admin console IP 105.112.44.88.')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300 hover-lift">
+              💳 Triage IPPIS Payroll Tamper
+            </button>
+            <button onclick="sendQuickPrompt('What is critical for today in Nigerian MDAs?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
+              📊 What is Critical Today?
+            </button>
+            <button onclick="sendQuickPrompt('Explain your Rule 05 honest error analysis and boundary failure modes in detail')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-cyan-300">
+              ⚖️ Rule 05 Error Analysis
+            </button>
+            <button onclick="sendQuickPrompt('How does Kariya Sentinel maintain zero data loss during power cuts and subsea fiber outages (Rule 06)?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
+              🛡️ Rule 06 Power Cut Spec
+            </button>
+            <button onclick="sendQuickPrompt('/search ngCERT latest Nigeria cyber advisories 2026')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-purple-300">
+              🔍 Live Web Search ngCERT
+            </button>
+            <button onclick="sendQuickPrompt('Who is Builder OS and what is your core architectural mission?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
+              👥 About Builder OS
             </button>
           </div>
-        </div>
 
-        <!-- Quick Action Prompt Chips -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 text-[11px] font-mono text-zinc-300 border-b border-zinc-800/60 mb-2">
-          <span class="text-zinc-500 text-[10px] uppercase font-bold mr-1 flex-shrink-0"><i class="fa-solid fa-bolt text-emerald-400 mr-1"></i>Quick Actions:</span>
-          <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300 hover-lift">
-            ⚡ Triage Pidgin Ransomware
-          </button>
-          <button onclick="sendQuickPrompt('/triage IPPIS ALERT: 40 ghost worker accounts inserted into Federal Ministry of Agriculture payroll. Beneficiary Zenith Bank 2088192039. Attacker admin console IP 105.112.44.88.')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300 hover-lift">
-            💳 Triage IPPIS Payroll Tamper
-          </button>
-          <button onclick="sendQuickPrompt('What is critical for today in Nigerian MDAs?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
-            📊 What is Critical Today?
-          </button>
-          <button onclick="sendQuickPrompt('Explain your Rule 05 honest error analysis and boundary failure modes in detail')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-cyan-300">
-            ⚖️ Rule 05 Error Analysis
-          </button>
-          <button onclick="sendQuickPrompt('How does Kariya Sentinel maintain zero data loss during power cuts and subsea fiber outages (Rule 06)?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
-            🛡️ Rule 06 Power Cut Spec
-          </button>
-          <button onclick="sendQuickPrompt('/search ngCERT latest Nigeria cyber advisories 2026')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-purple-300">
-            🔍 Live Web Search ngCERT
-          </button>
-          <button onclick="sendQuickPrompt('Who is Builder OS and what is your core architectural mission?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
-            👥 About Builder OS
-          </button>
-        </div>
-
-        <!-- Chat Messages Container -->
-        <div id="chatMessages" class="flex-1 overflow-y-auto space-y-3.5 pr-2 py-2 font-mono text-xs">
-          <!-- Initial Agent Welcome Message -->
-          <div class="flex items-start space-x-2.5">
-            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 border border-emerald-500/30">
-              <i class="fa-solid fa-shield-halved text-xs"></i>
-            </div>
-            <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2.5 shadow-sm">
-              <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
-                <span class="font-bold text-white text-xs">KARIYA Sentinel Intelligence</span>
-                <span class="text-[10px] text-zinc-500">Autonomous Ready</span>
+          <!-- Chat Messages Container -->
+          <div id="chatMessages" class="flex-1 overflow-y-auto space-y-3.5 pr-2 py-2 font-mono text-xs">
+            <!-- Initial Agent Welcome Message -->
+            <div class="flex items-start space-x-2.5">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 border border-emerald-500/30">
+                <i class="fa-solid fa-shield-halved text-xs"></i>
               </div>
-              <p><b>Greetings! I am KARIYA Sentinel</b>, Nigeria's sovereign cyber incident triage copilot developed by <b>Builder OS</b> for Track D (Government & Public Sector).</p>
-              <p class="text-zinc-400">You can speak directly with me in plain English or Nigerian Pidgin. I am equipped to:</p>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
-                <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800/80">
-                  <span class="text-emerald-400 font-semibold block mb-0.5">⚡ Autonomous Triage:</span>
-                  <span class="text-zinc-400">Paste any report or type <code>/triage &lt;text&gt;</code> to extract IOCs, scrub BVN/NIN, and assign SLAs.</span>
+              <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2.5 shadow-sm">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                  <span class="font-bold text-white text-xs">KARIYA Sentinel Intelligence</span>
+                  <span class="text-[10px] text-zinc-500">Autonomous Ready</span>
                 </div>
-                <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800/80">
-                  <span class="text-purple-400 font-semibold block mb-0.5">🔍 Live Threat Search:</span>
-                  <span class="text-zinc-400">Type <code>/search &lt;query&gt;</code> for live DuckDuckGo threat intel with zero API keys required.</span>
+                <p><b>Greetings! I am KARIYA Sentinel</b>, Nigeria's sovereign cyber incident triage copilot developed by <b>Builder OS</b> for Track D (Government &amp; Public Sector).</p>
+                <p class="text-zinc-400">You can speak directly with me in plain English or Nigerian Pidgin. I am equipped to:</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                  <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800/80">
+                    <span class="text-emerald-400 font-semibold block mb-0.5">⚡ Autonomous Triage:</span>
+                    <span class="text-zinc-400">Paste any report or type <code>/triage &lt;text&gt;</code> to extract IOCs, scrub BVN/NIN, and assign SLAs.</span>
+                  </div>
+                  <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800/80">
+                    <span class="text-purple-400 font-semibold block mb-0.5">🔍 Live Threat Search:</span>
+                    <span class="text-zinc-400">Type <code>/search &lt;query&gt;</code> for live DuckDuckGo threat intel with zero API keys required.</span>
+                  </div>
                 </div>
+                <p class="text-emerald-400 text-[11px] pt-1">💡 Click any quick prompt chip above or type an incident report below to begin.</p>
               </div>
-              <p class="text-emerald-400 text-[11px] pt-1">💡 Click any quick prompt chip above or type an incident report below to begin.</p>
             </div>
           </div>
+
+          <!-- Chat Input Form -->
+          <div class="pt-3 border-t border-zinc-800 flex items-center gap-2">
+            <input type="text" id="chatInput" onkeydown="handleChatKey(event)" placeholder="Ask KARIYA anything, or type '/triage <report>' or '/search <query>'..." class="flex-1 bg-[#09090b] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition">
+            <button onclick="sendChatMessage()" id="chatSendBtn" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold font-mono text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow-md">
+              <span>Send</span>
+              <i class="fa-solid fa-arrow-up text-xs"></i>
+            </button>
+          </div>
+
         </div>
 
-        <!-- Chat Input Form -->
-        <div class="pt-3 border-t border-zinc-800 flex items-center gap-2">
-          <input type="text" id="chatInput" onkeydown="handleChatKey(event)" placeholder="Ask KARIYA anything, or type '/triage <report>' or '/search <query>'..." class="flex-1 bg-[#09090b] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition">
-          <button onclick="sendChatMessage()" id="chatSendBtn" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold font-mono text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow-md">
-            <span>Send</span>
-            <i class="fa-solid fa-arrow-up text-xs"></i>
-          </button>
+        <!-- Right: AGENT MISSION CONTROL CENTER (Full Control & Real-time Emotion Panel) -->
+        <div id="agentControlPanel" class="xl:col-span-4 hidden xl:block card-surface rounded-xl p-4 sm:p-5 border-zinc-800 space-y-4 h-[76vh] overflow-y-auto font-mono text-xs shadow-xl">
+          
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-gamepad text-emerald-400 text-sm"></i>
+              <h3 class="font-bold text-white text-xs uppercase tracking-wider">Agent Mission Control</h3>
+            </div>
+            <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-semibold">Full Control</span>
+          </div>
+
+          <!-- Section 1: Real-Time Emotional State Manager -->
+          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-zinc-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+                <i class="fa-solid fa-masks-theater text-cyan-400"></i>
+                AI Emotion &amp; Avatar State
+              </span>
+              <span id="controlEmotionStatus" class="text-[10px] text-emerald-400 font-semibold">🟢 Vigilant</span>
+            </div>
+            <p class="text-zinc-500 text-[10px] leading-tight">
+              Real-time reactive avatar state. Click any emotion to manually switch or test reactive animations:
+            </p>
+            <div class="grid grid-cols-2 gap-1.5 pt-1">
+              <button onclick="setAgentEmotion('vigilant', 'Continuous perimeter scan active over MDAs')" class="px-2 py-1.5 rounded bg-zinc-900 hover:bg-emerald-950/70 border border-zinc-800 hover:border-emerald-500/50 text-emerald-400 text-[10px] flex items-center gap-1.5 transition">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Vigilant</span>
+              </button>
+              <button onclick="setAgentEmotion('thinking', 'Synthesizing multi-vector telemetry & reasoning')" class="px-2 py-1.5 rounded bg-zinc-900 hover:bg-cyan-950/70 border border-zinc-800 hover:border-cyan-500/50 text-cyan-400 text-[10px] flex items-center gap-1.5 transition">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span>Thinking</span>
+              </button>
+              <button onclick="setAgentEmotion('critical', 'CRITICAL P1 ALERT: High-severity attack confirmed!')" class="px-2 py-1.5 rounded bg-zinc-900 hover:bg-rose-950/70 border border-zinc-800 hover:border-rose-500/50 text-rose-400 text-[10px] flex items-center gap-1.5 transition">
+                <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                <span>Critical P1</span>
+              </button>
+              <button onclick="setAgentEmotion('hunting', 'Threat Hunting: Pivoting Shodan & NIST feeds')" class="px-2 py-1.5 rounded bg-zinc-900 hover:bg-purple-950/70 border border-zinc-800 hover:border-purple-500/50 text-purple-400 text-[10px] flex items-center gap-1.5 transition">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                <span>Hunting</span>
+              </button>
+            </div>
+            <button onclick="setAgentEmotion('offline', 'Rule 06 Offline Fortress: Zero external dependency')" class="w-full px-2 py-1.5 rounded bg-zinc-900 hover:bg-amber-950/70 border border-zinc-800 hover:border-amber-500/50 text-amber-400 text-[10px] flex items-center justify-center gap-1.5 transition">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Air-Gapped Fortress (Rule 06)</span>
+            </button>
+          </div>
+
+          <!-- Section 2: SOAR Operational Mode -->
+          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 space-y-2">
+            <span class="text-zinc-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+              <i class="fa-solid fa-microchip text-emerald-400"></i>
+              SOAR Operational Mode
+            </span>
+            <select id="agentOperationalMode" onchange="setAgentOperationalMode(this.value)" class="w-full bg-[#09090b] border border-zinc-700 rounded-md p-2 text-xs font-mono text-emerald-300 focus:outline-none focus:border-emerald-500">
+              <option value="autonomous">🛡️ Autonomous Auto-Pilot (Default Triage)</option>
+              <option value="threat_hunter">🕵️ Threat Hunter (Aggressive OSINT Pivot)</option>
+              <option value="airgap">🔒 Air-Gapped Isolation (Zero Outbound Net)</option>
+              <option value="rapid">⚡ High-Speed Forensics (Low Latency &lt;50ms)</option>
+            </select>
+            <p id="operationalModeDesc" class="text-[10px] text-zinc-500 leading-tight">
+              Auto-triage with NDPR scrubbing, MITRE mapping, and statutory SLA routing.
+            </p>
+          </div>
+
+          <!-- Section 3: Reasoning Effort & Temperature Slider -->
+          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-zinc-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+                <i class="fa-solid fa-gauge-high text-purple-400"></i>
+                Reasoning Effort / Temp
+              </span>
+              <span id="agentTempValue" class="text-emerald-400 font-bold text-xs">0.20</span>
+            </div>
+            <input type="range" id="agentTempSlider" min="0.0" max="1.0" step="0.05" value="0.20" oninput="updateAgentTemperature(this.value)" class="w-full accent-emerald-500 bg-zinc-800 h-1.5 rounded-lg cursor-pointer">
+            <div class="flex justify-between text-[9px] text-zinc-500">
+              <span>0.0 (Deterministic)</span>
+              <span>0.5 (Balanced)</span>
+              <span>1.0 (Creative)</span>
+            </div>
+          </div>
+
+          <!-- Section 4: Tool Permissions & Security Safeguards -->
+          <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 space-y-2">
+            <span class="text-zinc-400 font-bold text-[11px] uppercase tracking-wide flex items-center gap-1.5">
+              <i class="fa-solid fa-shield text-amber-400"></i>
+              Tool Safeguards &amp; Interlocks
+            </span>
+            <div class="space-y-1.5 text-[11px]">
+              <label class="flex items-center space-x-2 text-zinc-300">
+                <input type="checkbox" id="guardNdpr" checked disabled class="rounded border-zinc-700 text-emerald-500 focus:ring-0">
+                <span class="text-emerald-400 font-medium">NDPR PII Redaction (Mandatory)</span>
+              </label>
+              <label class="flex items-center space-x-2 text-zinc-300 cursor-pointer">
+                <input type="checkbox" id="guardThreatIntel" checked class="rounded border-zinc-700 text-emerald-500 focus:ring-0">
+                <span>Free Threat Intel (Shodan/NVD)</span>
+              </label>
+              <label class="flex items-center space-x-2 text-zinc-300 cursor-pointer">
+                <input type="checkbox" id="guardWebSearch" checked class="rounded border-zinc-700 text-emerald-500 focus:ring-0">
+                <span>Live Web Search (DuckDuckGo)</span>
+              </label>
+              <label class="flex items-center space-x-2 text-zinc-300 cursor-pointer">
+                <input type="checkbox" id="guardPidgin" checked class="rounded border-zinc-700 text-emerald-500 focus:ring-0">
+                <span>Nigerian Dialect / Pidgin NLP</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Section 5: Memory & Emergency Controls -->
+          <div class="space-y-2 pt-1">
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="clearChatMessages()" class="px-2.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition text-[11px] flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-trash-can text-zinc-400"></i>
+                <span>Flush Memory</span>
+              </button>
+              <button onclick="exportConversationTranscript()" class="px-2.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-emerald-400 hover:text-emerald-300 border border-zinc-800 transition text-[11px] flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-download text-emerald-400"></i>
+                <span>Export Audit</span>
+              </button>
+            </div>
+            <button onclick="simulateRedTeamAttack()" class="w-full px-3 py-2 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 transition text-[11px] flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-biohazard text-rose-400"></i>
+              <span>Simulate Red Team Ransomware</span>
+            </button>
+          </div>
+
         </div>
 
       </div>
@@ -1542,6 +1790,218 @@
     }
 
     /* ------------------------------------------------------------- */
+    /* AI AGENT EMOTION & MISSION CONTROL ENGINE                     */
+    /* ------------------------------------------------------------- */
+    const AGENT_EMOTIONS = {
+      vigilant: {
+        badge: '🟢 Vigilant Sentinel',
+        colorClass: 'emerald',
+        bgClass: 'bg-emerald-950',
+        borderClass: 'border-emerald-500/60',
+        ringBorderClass: 'border-emerald-500/50',
+        textClass: 'text-emerald-400',
+        badgeBg: 'bg-emerald-950',
+        badgeBorder: 'border-emerald-500/40',
+        badgeText: 'text-emerald-300',
+        pulseClass: 'avatar-pulse-vigilant',
+        orbitClass: 'avatar-spin-slow',
+        icon: 'fa-shield-halved',
+        subtext: 'Perimeter scan active • Standing guard over Nigerian Public Sector (Track D)'
+      },
+      thinking: {
+        badge: '🔵 Deep Reasoning',
+        colorClass: 'cyan',
+        bgClass: 'bg-cyan-950',
+        borderClass: 'border-cyan-500/60',
+        ringBorderClass: 'border-cyan-400/60',
+        textClass: 'text-cyan-400',
+        badgeBg: 'bg-cyan-950',
+        badgeBorder: 'border-cyan-500/50',
+        badgeText: 'text-cyan-300',
+        pulseClass: '',
+        orbitClass: 'avatar-spin-fast',
+        icon: 'fa-microchip fa-spin',
+        subtext: 'Synthesizing multi-vector telemetry, NDPR scrubbing & graph reasoning'
+      },
+      critical: {
+        badge: '🔴 Critical P1 Alert',
+        colorClass: 'rose',
+        bgClass: 'bg-rose-950',
+        borderClass: 'border-rose-500/70',
+        ringBorderClass: 'border-rose-500/60',
+        textClass: 'text-rose-400',
+        badgeBg: 'bg-rose-950',
+        badgeBorder: 'border-rose-500/60',
+        badgeText: 'text-rose-300',
+        pulseClass: 'avatar-pulse-alert',
+        orbitClass: 'avatar-spin-fast',
+        icon: 'fa-triangle-exclamation',
+        subtext: 'CRITICAL ALERT: Active exploit or high-severity threat signature detected!'
+      },
+      hunting: {
+        badge: '🟣 Threat Hunting',
+        colorClass: 'purple',
+        bgClass: 'bg-purple-950',
+        borderClass: 'border-purple-500/60',
+        ringBorderClass: 'border-purple-500/60',
+        textClass: 'text-purple-400',
+        badgeBg: 'bg-purple-950',
+        badgeBorder: 'border-purple-500/50',
+        badgeText: 'text-purple-300',
+        pulseClass: '',
+        orbitClass: 'avatar-spin-reverse',
+        icon: 'fa-crosshairs',
+        subtext: 'Threat Hunting: Correlating Shodan InternetDB, NIST NVD & DuckDuckGo'
+      },
+      offline: {
+        badge: '🟡 Air-Gapped Fortress',
+        colorClass: 'amber',
+        bgClass: 'bg-amber-950',
+        borderClass: 'border-amber-500/60',
+        ringBorderClass: 'border-amber-500/50',
+        textClass: 'text-amber-400',
+        badgeBg: 'bg-amber-950',
+        badgeBorder: 'border-amber-500/50',
+        badgeText: 'text-amber-300',
+        pulseClass: '',
+        orbitClass: 'avatar-spin-slow',
+        icon: 'fa-hard-drive',
+        subtext: 'Rule 06 Offline Fortress: Subsea cable/power cut active • 100% sovereign'
+      }
+    };
+
+    let currentEmotionState = 'vigilant';
+    let currentAgentMode = 'autonomous';
+    let currentAgentTemp = 0.20;
+
+    function setAgentEmotion(state, customSubtext) {
+      const em = AGENT_EMOTIONS[state] || AGENT_EMOTIONS.vigilant;
+      currentEmotionState = state;
+
+      // 1. Agent Console Avatar Elements
+      const ring = document.getElementById('agentAvatarRing');
+      const core = document.getElementById('agentAvatarCore');
+      const icon = document.getElementById('agentAvatarIcon');
+      const badge = document.getElementById('agentEmotionBadge');
+      const sub = document.getElementById('agentEmotionSubtext');
+      const statusLabel = document.getElementById('controlEmotionStatus');
+      const radarDot = document.getElementById('agentRadarDot');
+
+      if (ring) {
+        ring.className = `w-11 h-11 rounded-xl border border-dashed ${em.ringBorderClass} ${em.orbitClass} absolute transition-all duration-300`;
+      }
+      if (core) {
+        core.className = `w-9 h-9 rounded-lg ${em.bgClass} border ${em.borderClass} flex items-center justify-center ${em.textClass} shadow-md transition-all duration-300 ${em.pulseClass}`;
+      }
+      if (icon) {
+        icon.className = `fa-solid ${em.icon} text-sm transition-all duration-300`;
+      }
+      if (badge) {
+        badge.className = `text-[10px] font-mono ${em.badgeText} ${em.badgeBg} px-2 py-0.5 rounded border ${em.badgeBorder} font-semibold transition-all duration-300`;
+        badge.textContent = em.badge;
+      }
+      if (sub) {
+        sub.textContent = customSubtext || em.subtext;
+      }
+      if (statusLabel) {
+        statusLabel.textContent = em.badge;
+        statusLabel.className = `text-[10px] ${em.textClass} font-semibold`;
+      }
+      if (radarDot) {
+        if (state === 'critical') radarDot.className = 'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-zinc-950 radar-pulse';
+        else if (state === 'thinking') radarDot.className = 'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-zinc-950 radar-pulse';
+        else if (state === 'hunting') radarDot.className = 'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-purple-400 border-2 border-zinc-950 radar-pulse';
+        else if (state === 'offline') radarDot.className = 'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-zinc-950';
+        else radarDot.className = 'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-zinc-950 radar-pulse';
+      }
+
+      // 2. Top Header Brand Icon & Dot
+      const navIcon = document.getElementById('navBrandIcon');
+      const navDot = document.getElementById('navEmotionDot');
+      if (navIcon) {
+        navIcon.className = `fa-solid ${em.icon.split(' ')[0]} text-sm ${em.textClass}`;
+      }
+      if (navDot) {
+        if (state === 'critical') navDot.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 radar-pulse';
+        else if (state === 'thinking') navDot.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 radar-pulse';
+        else if (state === 'hunting') navDot.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-purple-400 radar-pulse';
+        else if (state === 'offline') navDot.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400';
+        else navDot.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 radar-pulse';
+      }
+
+      // 3. Mobile Navigation Drawer Avatar Elements
+      const mobCore = document.getElementById('mobileAvatarCore');
+      const mobIcon = document.getElementById('mobileAvatarIcon');
+      const mobTitle = document.getElementById('mobileEmotionTitle');
+      const mobSub = document.getElementById('mobileEmotionSub');
+      if (mobCore) mobCore.className = `w-8 h-8 rounded-lg ${em.bgClass} border ${em.borderClass} flex items-center justify-center ${em.textClass}`;
+      if (mobIcon) mobIcon.className = `fa-solid ${em.icon} text-xs`;
+      if (mobTitle) mobTitle.textContent = em.badge;
+      if (mobSub) mobSub.textContent = customSubtext || em.subtext;
+    }
+
+    function setAgentOperationalMode(mode) {
+      currentAgentMode = mode;
+      const descEl = document.getElementById('operationalModeDesc');
+      if (!descEl) return;
+      if (mode === 'autonomous') {
+        descEl.textContent = 'Auto-pilot triage with NDPR scrubbing, MITRE mapping, and statutory SLA routing.';
+        setAgentEmotion('vigilant', 'Operational Mode: Autonomous Auto-Pilot Engaged');
+      } else if (mode === 'threat_hunter') {
+        descEl.textContent = 'Aggressive cross-correlation via Shodan InternetDB, NIST NVD, and DuckDuckGo OSINT.';
+        setAgentEmotion('hunting', 'Operational Mode: Threat Hunter Engaged');
+      } else if (mode === 'airgap') {
+        descEl.textContent = 'Strict sovereign isolation. Disables all outbound sockets. 100% local regex & rules.';
+        setAgentEmotion('offline', 'Operational Mode: Air-Gapped Sovereign Isolation');
+      } else if (mode === 'rapid') {
+        descEl.textContent = 'Sub-50ms priority execution. Bypasses deep narrative chain-of-thought for fast output.';
+        setAgentEmotion('thinking', 'Operational Mode: High-Speed Forensics Engaged');
+      }
+    }
+
+    function updateAgentTemperature(val) {
+      currentAgentTemp = parseFloat(val);
+      const tempLabel = document.getElementById('agentTempValue');
+      if (tempLabel) tempLabel.textContent = currentAgentTemp.toFixed(2);
+    }
+
+    function toggleAgentControlPanel() {
+      const panel = document.getElementById('agentControlPanel');
+      if (!panel) return;
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) {
+        panel.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function exportConversationTranscript() {
+      const exportData = {
+        platform: 'KARIYA Sentinel Cyber Assistant',
+        team: 'Builder OS (Jabir Mustafa Sulaiman, Ahamad Musa, Halima Lawal)',
+        timestamp: new Date().toISOString(),
+        operational_mode: currentAgentMode,
+        reasoning_temperature: currentAgentTemp,
+        chat_history: agentChatHistory
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kariya_sentinel_audit_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function simulateRedTeamAttack() {
+      const attackPrompt = '/triage CBN ALERT: Core payment gateway experiencing Cobalt Strike beaconing from 194.165.16.2. High ransomware probability! 15,000 NGN records encrypted.';
+      document.getElementById('chatInput').value = attackPrompt;
+      setAgentEmotion('critical', 'Simulated Red Team Attack Injected: CBN Ransomware Triggered');
+      sendChatMessage();
+    }
+
+    /* ------------------------------------------------------------- */
     /* AI AGENT CHAT LOGIC (FOR MAIN CONSOLE & SIDECAR DRAWER)       */
     /* ------------------------------------------------------------- */
     function sendQuickPrompt(promptText) {
@@ -1551,12 +2011,14 @@
 
     function clearChatMessages() {
       const container = document.getElementById('chatMessages');
+      agentChatHistory = [];
       container.innerHTML = `
         <div class="text-center py-8 text-zinc-500 font-mono text-xs">
           <i class="fa-solid fa-shield-halved text-emerald-400 text-base mb-1"></i>
-          <p>Memory cleared. Ask KARIYA anything or click a quick prompt above.</p>
+          <p>Context memory flushed. Ask KARIYA anything or click a quick action above.</p>
         </div>
       `;
+      setAgentEmotion('vigilant', 'Context memory flushed • Ready for new instructions');
     }
 
     function handleChatKey(e) {
@@ -1591,6 +2053,9 @@
       sendBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
       isAgentResponding = true;
 
+      // Real-time Emotion Transition: Thinking & Reasoning
+      setAgentEmotion('thinking', 'Synthesizing multi-vector telemetry & reasoning...');
+
       const typingId = 'typing-' + Date.now();
       appendTypingIndicator(typingId);
 
@@ -1598,16 +2063,32 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, history: agentChatHistory })
+          body: JSON.stringify({ 
+            message: text, 
+            history: agentChatHistory,
+            mode: currentAgentMode,
+            temperature: currentAgentTemp
+          })
         });
         const data = await res.json();
         removeTypingIndicator(typingId);
         appendChatMessage('agent', data.reply, data.triage_result);
         agentChatHistory.push({ role: 'assistant', content: data.reply });
         if (agentChatHistory.length > 12) agentChatHistory = agentChatHistory.slice(-12);
+
+        // Reactive Emotion Adaptation
+        if (data.triage_result && (data.triage_result.severity === 'Critical' || data.triage_result.sla_level === 'P1')) {
+          setAgentEmotion('critical', `CRITICAL P1 ALERT: ${data.triage_result.category || 'High-Risk Incident Detected'}`);
+        } else if (text.startsWith('/search') || (data.reply && data.reply.includes('Threat Search Results'))) {
+          setAgentEmotion('hunting', 'Threat Hunting Complete • Correlated live intelligence');
+          setTimeout(() => { if (currentEmotionState === 'hunting') setAgentEmotion('vigilant'); }, 6000);
+        } else {
+          setAgentEmotion('vigilant', 'Active & Ready • Standing guard over Nigerian Public Sector');
+        }
       } catch (err) {
         removeTypingIndicator(typingId);
         appendChatMessage('agent', `❌ Communication error: ${err.message || err}`);
+        setAgentEmotion('critical', 'Agent Communication Failure • Subsea cable or socket error');
       } finally {
         sendBtn.disabled = false;
         sendBtn.innerHTML = `<span>Send</span> <i class="fa-solid fa-arrow-up text-xs"></i>`;
@@ -1638,6 +2119,8 @@
       container.appendChild(tDiv);
       container.scrollTop = container.scrollHeight;
 
+      setAgentEmotion('thinking', 'Copilot Sidecar: Reasoning & synthesizing...');
+
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -1654,12 +2137,14 @@
         container.scrollTop = container.scrollHeight;
         sidecarChatHistory.push({ role: 'assistant', content: data.reply });
         if (sidecarChatHistory.length > 12) sidecarChatHistory = sidecarChatHistory.slice(-12);
+        setAgentEmotion('vigilant', 'Copilot query answered • Standing guard');
       } catch (err) {
         tDiv.remove();
         const eDiv = document.createElement('div');
         eDiv.className = 'text-rose-400 text-[10px]';
         eDiv.textContent = 'Error: ' + err;
         container.appendChild(eDiv);
+        setAgentEmotion('critical', 'Copilot communication error');
       }
     }
 
@@ -2046,10 +2531,12 @@
         if (data.offline_mode) {
           dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
           text.textContent = 'Offline Mode';
+          setAgentEmotion('offline', 'Rule 06 Offline Fortress: Subsea fiber/power outage active');
           alert('RULE 06: Simulated Power/Fiber Cut. Incidents now buffering into local SQLite WAL database.');
         } else {
           dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
           text.textContent = 'Online Grid';
+          setAgentEmotion('vigilant', 'Online Grid Restored • Telemetry synchronized with ngCERT');
           alert(`NETWORK RESTORED: Synced ${data.synced_count || 0} queued incidents to ngCERT.`);
         }
         fetchDashboardData();
