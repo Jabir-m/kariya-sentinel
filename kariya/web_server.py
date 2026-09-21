@@ -356,6 +356,7 @@ async def get_dashboard_data():
         "summary": ev["summary"],
         "category_metrics": ev["category_metrics"],
         "honest_error_analysis": ev["honest_error_analysis"],
+        "confusion_matrix": ev.get("confusion_matrix", {}),
         "clusters": ev["clusters"],
         "offline_stats": stats
     }
