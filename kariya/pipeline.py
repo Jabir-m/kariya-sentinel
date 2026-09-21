@@ -52,21 +52,37 @@ class TriagePipeline:
         """Classify incident type with confidence score and decision rationale."""
         text_lower = text.lower()
 
-        # ML Classification if trained
+        # 1. Decisive Heuristic Threat Signals (Device lock extortion, Ransomware demands)
+        is_extortion = (
+            ("lock" in text_lower and "unlock" in text_lower) or 
+            any(k in text_lower for k in ["phone is locked", "device is locked", "computer is locked", "server is locked", "system is locked", "files are locked", ".locked"]) or
+            any(k in text_lower for k in ["ransomware", "extortion", "ransom demand", "pay to unlock", "demanding ransom", "decryption key"]) or
+            ("ransom" in text_lower and any(k in text_lower for k in ["pay", "demand", "dollar", "btc", "bitcoin", "naira", "wallet", "transfer"]))
+        )
+        if is_extortion:
+            return "Ransomware & Extortion", 0.98, "Detected active device/system lock and financial extortion demand requiring payment to unlock."
+
+        is_defacement = any(k in text_lower for k in ["defaced by", "hacked by", "defacement landing page", "website defaced", "index.php replaced"])
+        if is_defacement:
+            return "Website Defacement", 0.96, "Detected explicit public portal root defacement."
+
+        is_dos = any(k in text_lower for k in ["syn flood", "ddos attack", "udp flood", "botnet flood", "denial of service"])
+        if is_dos:
+            return "Denial of Service (DoS)", 0.96, "Detected network flooding / denial of service traffic."
+
+        # 2. Statistical ML Classification if trained
         if self.is_trained:
             X = self.vectorizer.transform([text])
             predicted_type = self.classifier.predict(X)[0]
             probs = self.classifier.predict_proba(X)[0]
             max_prob = float(max(probs))
-            
-            # Confidence boost if decisive keywords present
             rationale = f"Classified as '{predicted_type}' (Confidence: {max_prob:.1%}) based on linguistic patterns and threat indicators."
             return predicted_type, round(max_prob, 2), rationale
 
-        # Rule-based fallback for offline resilience
+        # 3. Rule-based fallback for offline resilience
         if any(k in text_lower for k in ["ransomware", ".locked", "btc", "bitcoin", "decrypt"]):
             return "Ransomware & Extortion", 0.95, "Detected explicit encryption indicators (.locked) and cryptocurrency ransom demands."
-        elif any(k in text_lower for k in ["ippis", "payroll", "beneficiary", "ghost", "bvn", "salary"]):
+        elif any(k in text_lower for k in ["ippis", "payroll", "beneficiary", "ghost", "salary"]):
             return "Unauthorized Access / Account Takeover", 0.92, "Detected unauthorized payroll credential swap or disbursement batch tampering."
         elif any(k in text_lower for k in ["defaced", "hacked by", "skull", "index.php", "cpanel"]):
             return "Website Defacement", 0.90, "Detected public website root tampering or defacement landing page."
@@ -203,24 +219,40 @@ class TriagePipeline:
                 redacted_entities.append({"type": "NIN", "value": nin})
         cleaned = re.sub(nin_standalone, "[REDACTED_NIN]", cleaned)
 
-        # 5. Redact NUBAN Bank Account numbers (10 digits across all Nigerian banks)
-        bank_acct_pattern = r"(?i)\b(?:Account|Acct|NUBAN)(?:\s*(?:Number|No|#))?\s*[:#-]?\s*(\d{10})\b"
-        for m in re.finditer(bank_acct_pattern, cleaned):
-            acct = m.group(1)
-            redacted_entities.append({"type": "ACCOUNT", "value": acct})
-        cleaned = re.sub(bank_acct_pattern, "Account: [REDACTED_ACCOUNT]", cleaned)
+        # 5. Redact NUBAN Bank Account numbers (10 digits across all Nigerian banks & mobile money)
+        bank_keywords = r"(?:Bank\s+Details?|Banking\s+Details?|Bank\s+Account|Account|Acct|NUBAN|Beneficiary|Send\s+money\s+to|Transfer\s+to|Pay\s+into)"
+        nigerian_banks = r"(?:Zenith|Access|GTB|GTBank|UBA|First\s+Bank|Fidelity|Sterling|Wema|Union|Ecobank|Polaris|FCMB|Stanbic|Kuda|Opay|Palmpay|Palm\s*pay|Moniepoint)"
 
-        bank_named_acct = r"(?i)\b(?:Zenith|Access|GTB|GTBank|UBA|First\s+Bank|Fidelity|Sterling|Wema|Union|Ecobank|Polaris|FCMB|Stanbic|Kuda|Opay|Palmpay)(?:\s+Bank)?(?:\s+(?:Account|Acct))?\s*[:#-]?\s*(\d{10})\b"
+        # 5a. Keyword + 10-digit number + optional bank name (e.g. bank details 8149751190 opay)
+        bank_combined = rf"(?i)\b{bank_keywords}(?:\s*(?:Number|No|#))?\s*[:#-]?\s*(\d{{10}})(?:\s+({nigerian_banks}(?:\s+Bank)?))?\b"
+        for m in re.finditer(bank_combined, cleaned):
+            acct = m.group(1)
+            bname = m.group(2) or ""
+            redacted_entities.append({"type": "ACCOUNT", "value": acct + (f" ({bname})" if bname else "")})
+        cleaned = re.sub(bank_combined, "Bank Details: [REDACTED_ACCOUNT]", cleaned)
+
+        # 5b. 10-digit number followed by bank name (e.g. 8149751190 opay, 2088192039 zenith)
+        bank_suffix_pattern = rf"(?i)\b(\d{{10}})\s+({nigerian_banks}(?:\s+Bank)?)\b"
+        for m in re.finditer(bank_suffix_pattern, cleaned):
+            acct = m.group(1)
+            bname = m.group(2) or ""
+            if not any(acct in r["value"] for r in redacted_entities):
+                redacted_entities.append({"type": "ACCOUNT", "value": acct + (f" ({bname})" if bname else "")})
+        cleaned = re.sub(bank_suffix_pattern, "[REDACTED_ACCOUNT] (Bank)", cleaned)
+
+        # 5c. Bank name followed by 10-digit number (e.g. Opay 8149751190, Access Bank 0123456789)
+        bank_named_acct = rf"(?i)\b{nigerian_banks}(?:\s+Bank)?(?:\s+(?:Account|Acct))?\s*[:#-]?\s*(\d{{10}})\b"
         for m in re.finditer(bank_named_acct, cleaned):
             acct = m.group(1)
-            if not any(acct == r["value"] for r in redacted_entities):
+            if not any(acct in r["value"] for r in redacted_entities):
                 redacted_entities.append({"type": "ACCOUNT", "value": acct})
         cleaned = re.sub(bank_named_acct, "Bank Account [REDACTED_ACCOUNT]", cleaned)
 
+        # 5d. Standalone NUBAN formats (01xxxxxxxx)
         acct_standalone = r"\b01\d{8}\b"
         for m in re.finditer(acct_standalone, cleaned):
             acct = m.group(0)
-            if not any(acct == r["value"] for r in redacted_entities):
+            if not any(acct in r["value"] for r in redacted_entities):
                 redacted_entities.append({"type": "ACCOUNT", "value": acct})
         cleaned = re.sub(acct_standalone, "[REDACTED_ACCOUNT]", cleaned)
 
