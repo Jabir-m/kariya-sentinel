@@ -20,7 +20,7 @@
 
 ## 👥 Development Team (Builder OS)
 * **Jabir Mustafa Sulaiman** ([@Jabir-m](https://github.com/Jabir-m)) — Team Lead & Systems Architect
-* **Ahamad Musa** ([@SibawyX8](https://github.com/SibawyX8)) — Core Machine Learning & Security Pipeline Engineer
+* **Ahmad Musa** ([@SibawyX8](https://github.com/SibawyX8)) — Core Machine Learning & Security Pipeline Engineer
 * **Halima Lawal** — Data Scientist & Fullstack UI/UX Designer
 
 ---
