@@ -1,9 +1,10 @@
 import os
 import re
+import io
 import json
 import asyncio
 from typing import Dict, Any, List, Optional, Tuple
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from openai import AsyncOpenAI
@@ -108,6 +109,23 @@ AGENT_TOOLS = [
                 "properties": {}
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "lookup_cyber_threat_ioc",
+            "description": "Perform a real-time, free cybersecurity threat intelligence lookup on an IP address (open ports & vulnerabilities via Shodan InternetDB), CVE ID (NIST NVD details, CVSS scores), or domain/hash.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "ioc": {
+                        "type": "string",
+                        "description": "IP address (e.g. 197.210.64.12), CVE ID (e.g. CVE-2023-38606), domain, or hash"
+                    }
+                },
+                "required": ["ioc"]
+            }
+        }
     }
 ]
 
@@ -146,6 +164,14 @@ async def execute_tool(name: str, arguments: Dict[str, Any]) -> Tuple[str, Optio
             return "\n".join(formatted) if formatted else "No live threat intel found for query.", None
         except Exception as e:
             return f"Error executing threat search: {e}", None
+
+    elif name == "lookup_cyber_threat_ioc":
+        ioc = arguments.get("ioc", "")
+        try:
+            lookup_res = await free_threat_lookup(ioc)
+            return json.dumps(lookup_res, ensure_ascii=False), None
+        except Exception as e:
+            return f"Error looking up threat IOC {ioc}: {e}", None
 
     elif name == "get_mda_queue_status":
         stats = offline_store.get_stats()
@@ -347,6 +373,171 @@ async def triage_report(req: TriageRequest):
     offline_store.save_incident(result, is_offline=is_offline)
     result["stored_offline"] = is_offline
     return result
+
+@app.post("/api/upload")
+async def upload_incident_file(file: UploadFile = File(...)):
+    """Accept JSON, DOCX, or PDF incident report files, extract text, and triage automatically."""
+    filename = file.filename or ""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    
+    if ext not in ("json", "pdf", "docx", "doc"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{ext}'. Accepted: json, pdf, docx, doc"
+        )
+    
+    content = await file.read()
+    extracted_text = ""
+    parse_errors = []
+
+    # --- JSON ---
+    if ext == "json":
+        try:
+            payload = json.loads(content.decode("utf-8", errors="replace"))
+            if isinstance(payload, list):
+                parts = []
+                for item in payload[:20]:
+                    if isinstance(item, dict):
+                        parts.append(
+                            item.get("raw_text") or item.get("text") or
+                            item.get("description") or item.get("message") or
+                            " ".join(str(v) for v in item.values() if isinstance(v, str))
+                        )
+                    elif isinstance(item, str):
+                        parts.append(item)
+                extracted_text = "\n\n".join(filter(None, parts))
+            elif isinstance(payload, dict):
+                extracted_text = (
+                    payload.get("raw_text") or payload.get("text") or
+                    payload.get("description") or payload.get("message") or
+                    " ".join(str(v) for v in payload.values() if isinstance(v, str))
+                )
+            else:
+                extracted_text = str(payload)
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Invalid JSON: {e}")
+
+    # --- PDF ---
+    elif ext == "pdf":
+        try:
+            import fitz  # PyMuPDF
+            doc = fitz.open(stream=content, filetype="pdf")
+            pages = [doc[i].get_text() for i in range(min(10, len(doc)))]
+            extracted_text = "\n".join(pages)
+            doc.close()
+        except ImportError:
+            # Fallback: try pdfminer
+            try:
+                from pdfminer.high_level import extract_text_to_fp
+                from pdfminer.layout import LAParams
+                out = io.StringIO()
+                extract_text_to_fp(io.BytesIO(content), out, laparams=LAParams())
+                extracted_text = out.getvalue()
+            except ImportError:
+                raise HTTPException(status_code=503, detail="PDF parsing library not installed. Install PyMuPDF: pip install pymupdf")
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"PDF parse error: {e}")
+
+    # --- DOCX / DOC ---
+    elif ext in ("docx", "doc"):
+        try:
+            from docx import Document as DocxDocument
+            doc = DocxDocument(io.BytesIO(content))
+            extracted_text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+        except ImportError:
+            raise HTTPException(status_code=503, detail="DOCX parsing library not installed. Install python-docx: pip install python-docx")
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"DOCX parse error: {e}")
+
+    extracted_text = extracted_text.strip()
+    if not extracted_text:
+        raise HTTPException(status_code=422, detail="Could not extract any text from the uploaded file.")
+
+    # Truncate to prevent overloading the pipeline
+    if len(extracted_text) > 8000:
+        extracted_text = extracted_text[:8000]
+
+    is_offline = offline_store.is_offline_mode()
+    result = pipeline.process_report(extracted_text, report_id=f"UPLOAD-{filename[:20]}")
+    offline_store.save_incident(result, is_offline=is_offline)
+    result["stored_offline"] = is_offline
+    result["source_filename"] = filename
+    result["extracted_text_preview"] = extracted_text[:300] + ("..." if len(extracted_text) > 300 else "")
+    return result
+
+@app.get("/api/threat-lookup")
+async def free_threat_lookup(ioc: str):
+    """Free, no-login threat intelligence lookup for an IP, domain, or CVE using public APIs."""
+    ioc = ioc.strip()
+    if not ioc:
+        raise HTTPException(status_code=400, detail="IOC parameter is required")
+
+    results: Dict[str, Any] = {"ioc": ioc, "sources": []}
+
+    # AbuseIPDB free public lookup (no key needed for basic check via DuckDuckGo)
+    # AlienVault OTX public endpoint (no auth for basic IOC reputation)
+    import urllib.request, urllib.error, urllib.parse
+
+    # Try AbuseIPDB public info page (scrape-free JSON endpoint is blocked without key)
+    # Use free Shodan InternetDB for IP lookups (no API key required)
+    ip_pattern = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+    cve_pattern = re.compile(r"^CVE-\d{4}-\d{4,7}$", re.IGNORECASE)
+
+    try:
+        if ip_pattern.match(ioc):
+            # Shodan InternetDB — completely free, no key needed
+            url = f"https://internetdb.shodan.io/{urllib.parse.quote(ioc)}"
+            req = urllib.request.Request(url, headers={"User-Agent": "KARIYA-Sentinel/2.5"})
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                data = json.loads(resp.read())
+            results["sources"].append({
+                "source": "Shodan InternetDB (Free)",
+                "data": data
+            })
+        elif cve_pattern.match(ioc):
+            # NIST NVD public CVE API — completely free, no key needed
+            url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={urllib.parse.quote(ioc.upper())}"
+            req = urllib.request.Request(url, headers={"User-Agent": "KARIYA-Sentinel/2.5"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read())
+            vulns = data.get("vulnerabilities", [])
+            if vulns:
+                cve_data = vulns[0].get("cve", {})
+                desc_list = cve_data.get("descriptions", [])
+                description = next((d["value"] for d in desc_list if d["lang"] == "en"), "")
+                metrics = cve_data.get("metrics", {})
+                cvss = None
+                for version_key in ["cvssMetricV31", "cvssMetricV30", "cvssMetricV2"]:
+                    if version_key in metrics and metrics[version_key]:
+                        cvss = metrics[version_key][0].get("cvssData", {})
+                        break
+                results["sources"].append({
+                    "source": "NIST NVD (Free)",
+                    "data": {
+                        "cve_id": ioc.upper(),
+                        "description": description,
+                        "cvss": cvss
+                    }
+                })
+            else:
+                results["sources"].append({"source": "NIST NVD (Free)", "data": {"message": "CVE not found"}})
+        else:
+            # For domains: DuckDuckGo live search as free threat intel
+            if DDGS:
+                ddgs = DDGS()
+                sr = list(ddgs.text(f"site:abuse.ch OR site:threatfox.abuse.ch {ioc} threat intel", max_results=3))
+                results["sources"].append({
+                    "source": "DuckDuckGo Threat Intel (Free)",
+                    "data": [{"title": r.get("title"), "url": r.get("href"), "summary": r.get("body")} for r in sr]
+                })
+    except urllib.error.URLError:
+        results["error"] = "Threat intel lookup failed — network unreachable (Rule 06 offline mode)."
+    except Exception as e:
+        results["error"] = str(e)
+
+    return results
+
+
 
 @app.post("/api/toggle-offline")
 async def toggle_offline():

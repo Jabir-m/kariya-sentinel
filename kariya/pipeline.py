@@ -310,21 +310,44 @@ class TriagePipeline:
 
             # Master Incident synthesis
             primary = max(cluster_members, key=lambda x: x["urgency_score"])
+            # Merge all IOCs across members into a structured dict
+            merged_iocs: Dict[str, list] = {"ips": [], "domains": [], "urls": [], "hashes": [], "cves": []}
+            for m in cluster_members:
+                td = m.get("technical_details", {})
+                for key in merged_iocs:
+                    merged_iocs[key] += td.get(key, [])
+            # Deduplicate per key
+            for key in merged_iocs:
+                merged_iocs[key] = list(dict.fromkeys(merged_iocs[key]))
+
+            # Derive target_entity from organization (fallback from reports)
+            target_entity = None
+            for m in cluster_members:
+                org = m.get("organization") or m.get("target_entity")
+                if org:
+                    target_entity = org
+                    break
+
+            sla_data_cluster = self.SEVERITY_SLAS.get(primary["severity"], {})
             clusters.append({
                 "cluster_id": f"INC-CLUSTER-{len(clusters)+1:03d}",
                 "incident_type": primary["incident_type"],
                 "severity": primary["severity"],
+                "severity_level": sla_data_cluster.get("level", primary.get("sla_level", "P1")),
                 "urgency_score": primary["urgency_score"],
                 "sla": primary["sla"],
                 "destination": primary["destination"],
+                "statutory_router": primary["destination"],
+                "target_entity": target_entity or "Federal Public Sector",
                 "primary_report_id": primary["report_id"],
                 "report_count": len(cluster_members),
                 "is_duplicate_incident": len(cluster_members) > 1,
                 "cleaned_summary": primary["cleaned_text"][:220] + "...",
+                "raw_text": primary["raw_text"],
+                "sanitized_text": primary["cleaned_text"],
+                "iocs": merged_iocs,
                 "all_iocs": list(set([
-                    ioc for m in cluster_members
-                    for sub in m["technical_details"].values()
-                    for ioc in sub
+                    ioc for sub in merged_iocs.values() for ioc in sub
                 ])),
                 "reports": cluster_members
             })

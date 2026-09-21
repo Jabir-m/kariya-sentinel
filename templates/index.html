@@ -272,7 +272,41 @@
     <!-- TAB 1: INCIDENT QUEUE & SPLIT-PANE FORENSIC INSPECTOR        -->
     <!-- ============================================================ -->
     <div id="tabContent-queue" class="tab-view space-y-3">
-      
+
+      <!-- File Upload Card -->
+      <div class="card-surface rounded-xl p-4 border border-dashed border-zinc-700 hover:border-emerald-500/50 transition" id="uploadCard">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fa-solid fa-file-arrow-up text-emerald-400 text-sm"></i>
+              <span class="text-xs font-bold text-white font-mono">Upload Incident Report File</span>
+              <span class="text-[10px] font-mono text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">JSON • PDF • DOCX</span>
+            </div>
+            <p class="text-[11px] text-zinc-400 font-mono">Drop or select a file to auto-extract text, triage, and display results instantly.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <label for="fileUploadInput" class="cursor-pointer px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-200 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-folder-open text-emerald-400"></i> Choose File
+            </label>
+            <input type="file" id="fileUploadInput" accept=".json,.pdf,.docx,.doc" class="hidden" onchange="handleFileUpload(this)">
+            <button onclick="document.getElementById('fileUploadInput').click()" class="hidden"></button>
+          </div>
+        </div>
+        <!-- Upload Progress -->
+        <div id="uploadStatus" class="hidden mt-3 pt-3 border-t border-zinc-800">
+          <div id="uploadResult" class="space-y-2 font-mono text-xs"></div>
+        </div>
+        <!-- Drag/Drop zone overlay -->
+        <div id="dropZone" class="mt-2 border border-dashed border-zinc-800 rounded-lg p-4 text-center text-zinc-500 text-[11px] font-mono hover:border-emerald-600/50 transition cursor-pointer" onclick="document.getElementById('fileUploadInput').click()"
+          ondragover="event.preventDefault(); this.classList.add('border-emerald-500')"
+          ondragleave="this.classList.remove('border-emerald-500')"
+          ondrop="event.preventDefault(); this.classList.remove('border-emerald-500'); handleFileUpload(null, event.dataTransfer.files[0])">
+          <i class="fa-solid fa-cloud-arrow-up text-zinc-600 text-base mb-1"></i><br>
+          Drag &amp; drop a <b>.json</b>, <b>.pdf</b>, or <b>.docx</b> incident file here
+        </div>
+      </div>
+
+
       <!-- Filter & Search Toolbar -->
       <div class="card-surface rounded-xl p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
         <div class="flex-1 relative">
@@ -802,6 +836,27 @@
     </div>
   </div>
 
+  <!-- FREE THREAT INTEL MODAL (SHODAN / NIST NVD / IP-API) -->
+  <div id="threatModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-3">
+    <div class="card-surface rounded-2xl max-w-xl w-full mx-auto border border-zinc-700 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+      <div class="p-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900 rounded-t-2xl">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-shield-virus text-emerald-400"></i>
+          <span class="text-xs font-bold text-white font-mono" id="threatModalHeader">Free Threat Intelligence Lookup</span>
+        </div>
+        <button onclick="closeThreatModal()" class="p-1 text-zinc-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto space-y-3 font-mono text-xs" id="threatModalBody">
+        <div class="text-center py-8 text-zinc-400">
+          <i class="fa-solid fa-circle-notch fa-spin text-emerald-400 mb-2"></i>
+          <p>Querying zero-login cyber intelligence...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FLOATING QUICK COPILOT DRAWER (ACCESSIBLE FROM ANY PAGE) -->
   <div id="copilotSidecar" class="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-[#101014] border-l border-zinc-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
     <!-- Sidecar Header -->
@@ -995,6 +1050,49 @@
       }
     }
 
+    function getIncidentData(c) {
+      if (!c) return {};
+      const rep = (c.reports && c.reports.length > 0) ? c.reports[0] : {};
+      
+      const raw_text = c.raw_text || rep.raw_text || '';
+      const sanitized_text = c.sanitized_text || c.cleaned_summary || rep.cleaned_text || raw_text;
+      const target_entity = c.target_entity || rep.organization || rep.target_entity || 'Federal Public Sector';
+      const statutory_router = c.statutory_router || c.destination || rep.destination || 'National CERT (ngCERT)';
+      const severity = c.severity || rep.severity || 'Medium';
+      const severity_level = c.severity_level || rep.sla_level || 'P1';
+      const sla = c.sla || rep.sla || '15 Minutes';
+      const incident_type = c.incident_type || rep.incident_type || 'Cyber Incident';
+      
+      let iocs = c.iocs;
+      if (!iocs || typeof iocs !== 'object' || Object.keys(iocs).length === 0) {
+        if (rep.technical_details && typeof rep.technical_details === 'object') {
+          iocs = rep.technical_details;
+        } else if (Array.isArray(c.all_iocs)) {
+          iocs = { ips: [], domains: [], urls: [], hashes: [], cves: [] };
+          c.all_iocs.forEach(item => {
+            if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(item)) iocs.ips.push(item);
+            else if (/^CVE-/i.test(item)) iocs.cves.push(item);
+            else if (item.length === 32 || item.length === 64) iocs.hashes.push(item);
+            else iocs.domains.push(item);
+          });
+        } else {
+          iocs = { ips: [], domains: [], urls: [], hashes: [], cves: [] };
+        }
+      }
+      return {
+        raw_text,
+        sanitized_text,
+        target_entity,
+        statutory_router,
+        severity,
+        severity_level,
+        sla,
+        incident_type,
+        iocs,
+        report_count: c.report_count || 1
+      };
+    }
+
     function renderIncidentMasterList(clusters) {
       const container = document.getElementById('incidentMasterList');
       if (!clusters || clusters.length === 0) {
@@ -1008,33 +1106,34 @@
 
       let html = '';
       clusters.forEach((c, idx) => {
+        const d = getIncidentData(c);
         const isSelected = idx === selectedIndex;
         const activeClass = isSelected ? 'card-surface-active' : 'card-surface';
-        const sevBadge = getSeverityBadge(c.severity);
-        const dedupCount = c.report_count || 1;
+        const sevBadge = getSeverityBadge(d.severity);
+        const dedupCount = d.report_count || 1;
 
         html += `
           <div onclick="selectIncident(${idx})" class="${activeClass} rounded-xl p-3.5 transition cursor-pointer space-y-2">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center space-x-2">
                 <span class="${sevBadge} px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase">
-                  ${c.severity || 'Medium'} (${c.severity_level || 'P3'})
+                  ${d.severity || 'Medium'} (${d.severity_level || 'P3'})
                 </span>
-                <span class="text-xs font-semibold text-white font-mono">${escapeHtml(c.target_entity || 'Federal Sector')}</span>
+                <span class="text-xs font-semibold text-white font-mono">${escapeHtml(d.target_entity || 'Federal Sector')}</span>
               </div>
-              <span class="text-[10px] font-mono text-zinc-500">${c.sla || '4 Hours'}</span>
+              <span class="text-[10px] font-mono text-zinc-500">${d.sla || '4 Hours'}</span>
             </div>
 
             <div class="text-xs font-medium text-zinc-200">
-              ${escapeHtml(c.incident_type)}
+              ${escapeHtml(d.incident_type)}
             </div>
 
             <p class="text-[11px] text-zinc-400 font-mono line-clamp-2 leading-relaxed">
-              ${escapeHtml(c.sanitized_text || c.raw_text || '')}
+              ${escapeHtml(d.sanitized_text || d.raw_text || '')}
             </p>
 
             <div class="flex items-center justify-between text-[10px] font-mono pt-1 text-zinc-500 border-t border-zinc-800/40">
-              <span>Routing: <b class="text-zinc-300">${escapeHtml(c.statutory_router || 'ngCERT')}</b></span>
+              <span>Routing: <b class="text-zinc-300">${escapeHtml(d.statutory_router || 'ngCERT')}</b></span>
               ${dedupCount > 1 ? `
                 <span class="text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-800/40 font-semibold">
                   ${dedupCount} Clustered
@@ -1050,13 +1149,15 @@
 
     function selectIncident(idx) {
       selectedIndex = idx;
-      const c = allIncidents[idx];
-      if (!c) return;
+      const rawObj = allIncidents[idx];
+      if (!rawObj) return;
+
+      const d = getIncidentData(rawObj);
 
       renderIncidentMasterList(allIncidents);
 
       const detailPane = document.getElementById('incidentDetailPane');
-      const sevBadge = getSeverityBadge(c.severity);
+      const sevBadge = getSeverityBadge(d.severity);
 
       detailPane.innerHTML = `
         <div class="card-surface rounded-xl p-5 space-y-4 font-mono text-xs">
@@ -1064,23 +1165,23 @@
           <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
             <div class="flex items-center space-x-2">
               <span class="${sevBadge} px-2.5 py-0.5 rounded text-xs font-bold uppercase">
-                ${c.severity} (${c.severity_level || 'P1'})
+                ${d.severity} (${d.severity_level || 'P1'})
               </span>
-              <span class="text-sm font-bold text-white">${escapeHtml(c.incident_type)}</span>
+              <span class="text-sm font-bold text-white">${escapeHtml(d.incident_type)}</span>
             </div>
             <div class="text-right text-[11px]">
-              <span class="text-zinc-500">SLA:</span> <b class="text-amber-400">${c.sla || '15 Minutes'}</b>
+              <span class="text-zinc-500">SLA:</span> <b class="text-amber-400">${d.sla || '15 Minutes'}</b>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-2 text-[11px]">
             <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800">
               <span class="text-zinc-500 block">Target Institution:</span>
-              <b class="text-zinc-200">${escapeHtml(c.target_entity || 'Federal MDAs')}</b>
+              <b class="text-zinc-200">${escapeHtml(d.target_entity || 'Federal MDAs')}</b>
             </div>
             <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800">
               <span class="text-zinc-500 block">Statutory Routing:</span>
-              <b class="text-cyan-400">${escapeHtml(c.statutory_router || 'ngCERT')}</b>
+              <b class="text-cyan-400">${escapeHtml(d.statutory_router || 'ngCERT')}</b>
             </div>
           </div>
 
@@ -1089,7 +1190,7 @@
               <span class="text-rose-400 font-semibold"><i class="fa-solid fa-lock-open mr-1"></i> Raw Report Ingest:</span>
               <span class="text-[9px] text-zinc-500 bg-zinc-900 px-1 py-0.5 rounded">Unsafe</span>
             </div>
-            <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 text-zinc-400 text-[11px] leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap">${escapeHtml(c.raw_text || '')}</div>
+            <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800/80 text-zinc-400 text-[11px] leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap">${escapeHtml(d.raw_text || '')}</div>
           </div>
 
           <div class="space-y-2">
@@ -1097,39 +1198,46 @@
               <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-shield-check mr-1"></i> NDPR-Sanitized Output:</span>
               <span class="text-[9px] text-emerald-400 bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-800/40">Clean</span>
             </div>
-            <div class="bg-zinc-950 p-3 rounded-lg border border-emerald-900/40 text-emerald-300 text-[11px] leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap">${escapeHtml(c.sanitized_text || c.raw_text || '')}</div>
+            <div class="bg-zinc-950 p-3 rounded-lg border border-emerald-900/40 text-emerald-300 text-[11px] leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap">${escapeHtml(d.sanitized_text || d.raw_text || '')}</div>
           </div>
 
-          ${c.iocs && Object.keys(c.iocs).some(k => (c.iocs[k] || []).length > 0) ? `
-            <div class="pt-2 border-t border-zinc-800">
-              <span class="text-zinc-500 text-[10px] uppercase font-bold block mb-1.5">Extracted Indicators (IOCs):</span>
-              <div class="flex flex-wrap gap-1.5">
-                ${renderIocChips(c.iocs)}
-              </div>
+          <div class="pt-2 border-t border-zinc-800">
+            <span class="text-zinc-500 text-[10px] uppercase font-bold block mb-1.5">Extracted Indicators (IOCs):</span>
+            <div class="flex flex-wrap gap-1.5">
+              ${renderIocChips(d.iocs)}
             </div>
-          ` : ''}
+          </div>
 
         </div>
       `;
 
       if (window.innerWidth < 1024) {
-        openMobileInspector(c);
+        openMobileInspector(d);
       }
     }
 
-    function openMobileInspector(c) {
-      document.getElementById('mobileModalHeader').textContent = `${c.incident_type} (${c.target_entity || 'MDA'})`;
+    function openMobileInspector(d) {
+      document.getElementById('mobileModalHeader').textContent = `${d.incident_type} (${d.target_entity || 'MDA'})`;
       document.getElementById('mobileModalBody').innerHTML = `
-        <div class="space-y-3">
+        <div class="space-y-3 font-mono text-xs">
+          <div class="flex items-center justify-between">
+            <span class="${getSeverityBadge(d.severity)} px-2 py-0.5 rounded text-[10px] font-bold uppercase">${d.severity} (${d.severity_level || 'P1'})</span>
+            <span class="text-amber-400 text-[10px]">SLA: ${d.sla || '15m'}</span>
+          </div>
+
+          <div class="text-[11px] text-zinc-400">
+            Target: <b class="text-zinc-200">${escapeHtml(d.target_entity)}</b> &nbsp;|&nbsp; Route: <b class="text-cyan-400">${escapeHtml(d.statutory_router)}</b>
+          </div>
+
           <div class="text-rose-400 font-semibold text-[11px]">Raw Text (Unsanitized):</div>
-          <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-400 text-[11px] leading-relaxed">${escapeHtml(c.raw_text || '')}</div>
+          <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-400 text-[11px] leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">${escapeHtml(d.raw_text || '')}</div>
           
           <div class="text-emerald-400 font-semibold text-[11px]">NDPR-Sanitized (Safe):</div>
-          <div class="bg-zinc-950 p-2.5 rounded border border-emerald-900/50 text-emerald-300 text-[11px] leading-relaxed">${escapeHtml(c.sanitized_text || '')}</div>
+          <div class="bg-zinc-950 p-2.5 rounded border border-emerald-900/50 text-emerald-300 text-[11px] leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">${escapeHtml(d.sanitized_text || '')}</div>
 
           <div class="pt-2 border-t border-zinc-800">
             <span class="text-zinc-500 text-[10px] block mb-1">Extracted IOCs:</span>
-            <div class="flex flex-wrap gap-1">${renderIocChips(c.iocs || {})}</div>
+            <div class="flex flex-wrap gap-1">${renderIocChips(d.iocs || {})}</div>
           </div>
         </div>
       `;
@@ -1145,20 +1253,223 @@
     }
 
     function renderIocChips(iocs) {
+      if (!iocs) return '<span class="text-zinc-500 text-[10px]">None detected</span>';
       let chips = [];
       (iocs.ips || []).forEach(ip => {
-        chips.push(`<span onclick="copyToClipboard('${escapeHtml(ip)}', this)" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-mono cursor-pointer"><i class="fa-solid fa-network-wired text-cyan-400 text-[9px] mr-1"></i>${escapeHtml(ip)}</span>`);
+        chips.push(`
+          <div class="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-mono">
+            <span onclick="copyToClipboard('${escapeHtml(ip)}', this)" class="cursor-pointer hover:text-white" title="Click to copy"><i class="fa-solid fa-network-wired text-cyan-400 text-[9px] mr-1"></i>${escapeHtml(ip)}</span>
+            <button onclick="lookupThreatIoc('${escapeHtml(ip)}')" class="ml-1 text-zinc-400 hover:text-emerald-400" title="Free Threat Intel Lookup (Shodan/IP-API)"><i class="fa-solid fa-magnifying-glass text-[9px]"></i></button>
+          </div>
+        `);
       });
       (iocs.domains || []).forEach(d => {
-        chips.push(`<span onclick="copyToClipboard('${escapeHtml(d)}', this)" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-mono cursor-pointer"><i class="fa-solid fa-globe text-emerald-400 text-[9px] mr-1"></i>${escapeHtml(d)}</span>`);
+        chips.push(`
+          <div class="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-mono">
+            <span onclick="copyToClipboard('${escapeHtml(d)}', this)" class="cursor-pointer hover:text-white" title="Click to copy"><i class="fa-solid fa-globe text-emerald-400 text-[9px] mr-1"></i>${escapeHtml(d)}</span>
+            <button onclick="lookupThreatIoc('${escapeHtml(d)}')" class="ml-1 text-zinc-400 hover:text-emerald-400" title="Free Threat Intel Lookup"><i class="fa-solid fa-magnifying-glass text-[9px]"></i></button>
+          </div>
+        `);
       });
       (iocs.hashes || []).forEach(h => {
-        chips.push(`<span onclick="copyToClipboard('${escapeHtml(h)}', this)" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-mono cursor-pointer"><i class="fa-solid fa-fingerprint text-purple-400 text-[9px] mr-1"></i>${escapeHtml(h.substring(0, 8))}...</span>`);
+        chips.push(`
+          <div class="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-mono">
+            <span onclick="copyToClipboard('${escapeHtml(h)}', this)" class="cursor-pointer hover:text-white" title="Click to copy"><i class="fa-solid fa-fingerprint text-purple-400 text-[9px] mr-1"></i>${escapeHtml(h.substring(0, 10))}...</span>
+            <button onclick="lookupThreatIoc('${escapeHtml(h)}')" class="ml-1 text-zinc-400 hover:text-emerald-400" title="Free Threat Intel Lookup"><i class="fa-solid fa-magnifying-glass text-[9px]"></i></button>
+          </div>
+        `);
       });
       (iocs.cves || []).forEach(cve => {
-        chips.push(`<span onclick="copyToClipboard('${escapeHtml(cve)}', this)" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-rose-300 px-2 py-0.5 rounded text-[10px] font-mono cursor-pointer"><i class="fa-solid fa-bug text-rose-400 text-[9px] mr-1"></i>${escapeHtml(cve)}</span>`);
+        chips.push(`
+          <div class="inline-flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-rose-300 px-2 py-0.5 rounded text-[10px] font-mono">
+            <span onclick="copyToClipboard('${escapeHtml(cve)}', this)" class="cursor-pointer hover:text-white" title="Click to copy"><i class="fa-solid fa-bug text-rose-400 text-[9px] mr-1"></i>${escapeHtml(cve)}</span>
+            <button onclick="lookupThreatIoc('${escapeHtml(cve)}')" class="ml-1 text-zinc-400 hover:text-rose-400" title="Free NIST NVD CVE Lookup"><i class="fa-solid fa-magnifying-glass text-[9px]"></i></button>
+          </div>
+        `);
       });
-      return chips.join(' ');
+      return chips.length > 0 ? chips.join(' ') : '<span class="text-zinc-500 text-[10px]">No technical IOCs extracted</span>';
+    }
+
+    async function lookupThreatIoc(ioc) {
+      const modal = document.getElementById('threatModal');
+      const header = document.getElementById('threatModalHeader');
+      const body = document.getElementById('threatModalBody');
+
+      header.textContent = `Threat Intel: ${ioc}`;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      body.innerHTML = `
+        <div class="text-center py-8 text-zinc-400 font-mono text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin text-emerald-400 text-lg mb-2"></i>
+          <p>Querying zero-login cyber intelligence for <b>${escapeHtml(ioc)}</b>...</p>
+        </div>
+      `;
+
+      try {
+        const res = await fetch(`/api/threat-lookup?ioc=${encodeURIComponent(ioc)}`);
+        const data = await res.json();
+        
+        let sourcesHtml = '';
+        if (data.sources && data.sources.length > 0) {
+          data.sources.forEach(s => {
+            sourcesHtml += `
+              <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-1.5">
+                <div class="text-emerald-400 font-bold text-[11px] flex items-center justify-between border-b border-zinc-800/80 pb-1">
+                  <span>${escapeHtml(s.source)}</span>
+                  <span class="text-[9px] text-zinc-500">Zero-Auth Public Feed</span>
+                </div>
+                <pre class="text-[10px] text-zinc-300 overflow-x-auto max-h-48 whitespace-pre-wrap leading-relaxed">${escapeHtml(JSON.stringify(s.data, null, 2))}</pre>
+              </div>
+            `;
+          });
+        } else {
+          sourcesHtml = `<div class="text-zinc-500 italic p-3 bg-zinc-950 rounded border border-zinc-800">No external threat records returned.</div>`;
+        }
+
+        body.innerHTML = `
+          <div class="space-y-3 font-mono text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-bold text-xs">IOC: <code class="text-cyan-400 bg-zinc-900 px-1.5 py-0.5 rounded">${escapeHtml(ioc)}</code></span>
+              <button onclick="sendQuickPrompt('/search threat actor or CVE for ${escapeHtml(ioc)}'); closeThreatModal(); switchTab('agent')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-emerald-300 px-2 py-1 rounded text-[10px] flex items-center gap-1 transition">
+                <i class="fa-solid fa-robot"></i> Consult KARIYA Agent
+              </button>
+            </div>
+            ${data.error ? `<div class="bg-amber-950/40 border border-amber-800/80 text-amber-300 p-2 rounded text-[11px]">${escapeHtml(data.error)}</div>` : ''}
+            <div class="space-y-2">${sourcesHtml}</div>
+          </div>
+        `;
+      } catch (err) {
+        body.innerHTML = `
+          <div class="bg-rose-950/40 border border-rose-800 text-rose-300 p-3 rounded font-mono text-xs">
+            Threat lookup error: ${escapeHtml(err.message || err)}
+          </div>
+        `;
+      }
+    }
+
+    function closeThreatModal() {
+      const modal = document.getElementById('threatModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function handleFileUpload(inputEl, droppedFile) {
+      const file = droppedFile || (inputEl && inputEl.files && inputEl.files[0]);
+      if (!file) return;
+
+      const allowedExts = ['json', 'pdf', 'docx', 'doc'];
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!allowedExts.includes(ext)) {
+        alert(`Unsupported file extension '.${ext}'. Please upload .json, .pdf, or .docx files.`);
+        if (inputEl) inputEl.value = '';
+        return;
+      }
+
+      const statusContainer = document.getElementById('uploadStatus');
+      const resultContainer = document.getElementById('uploadResult');
+      statusContainer.classList.remove('hidden');
+      resultContainer.innerHTML = `
+        <div class="flex items-center gap-2 text-emerald-400 py-1">
+          <i class="fa-solid fa-circle-notch fa-spin text-sm"></i>
+          <span>Uploading &amp; triaging <b>${escapeHtml(file.name)}</b> (${(file.size / 1024).toFixed(1)} KB)...</span>
+        </div>
+      `;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(errData.detail || 'Upload failed');
+        }
+
+        const triageResult = await res.json();
+        const sevBadge = getSeverityBadge(triageResult.severity);
+
+        resultContainer.innerHTML = `
+          <div class="bg-zinc-950 border border-emerald-500/40 rounded-lg p-3 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center gap-2">
+                <span class="${sevBadge} px-2 py-0.5 rounded text-[10px] font-bold uppercase">${triageResult.severity} (${triageResult.sla_level || 'P1'})</span>
+                <span class="text-white font-bold text-xs">${escapeHtml(triageResult.incident_type)}</span>
+                <span class="text-[10px] text-zinc-400">• ${escapeHtml(triageResult.source_filename || file.name)}</span>
+              </div>
+              <span class="text-amber-400 text-[10px]">SLA: ${triageResult.sla || '15 Minutes'}</span>
+            </div>
+
+            <div class="text-[11px] text-zinc-300">
+              <b>Statutory Router:</b> <span class="text-cyan-400">${escapeHtml(triageResult.destination || 'ngCERT')}</span> &nbsp;|&nbsp; 
+              <b>NDPR PII Scrubbed:</b> <span class="text-emerald-400">${triageResult.pii_count || 0} tokens</span> &nbsp;|&nbsp; 
+              <b>IOCs:</b> <span class="text-purple-400">${triageResult.ioc_count || 0} indicators</span>
+            </div>
+
+            <div class="text-[11px] text-zinc-400 italic bg-zinc-900/60 p-2 rounded border border-zinc-800 line-clamp-2">
+              "${escapeHtml(triageResult.cleaned_text || triageResult.extracted_text_preview || '')}"
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+              <button onclick="loadUploadedIncidentToPane(${JSON.stringify(triageResult).replace(/"/g, '&quot;')})" class="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
+                <i class="fa-solid fa-eye"></i> View in Forensic Inspector
+              </button>
+              <button onclick="sendQuickPrompt('/triage ' + ${JSON.stringify((triageResult.cleaned_text || '').substring(0, 300)).replace(/"/g, '&quot;')}); switchTab('agent')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 px-2.5 py-1 rounded transition flex items-center gap-1">
+                <i class="fa-solid fa-robot text-emerald-400"></i> Consult KARIYA Agent
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Prepend to allIncidents and update UI
+        allIncidents.unshift({
+          ...triageResult,
+          report_count: 1,
+          target_entity: triageResult.destination || 'Uploaded Public Sector Report',
+          statutory_router: triageResult.destination || 'ngCERT',
+          severity_level: triageResult.sla_level || 'P1',
+          sanitized_text: triageResult.cleaned_text,
+          iocs: triageResult.technical_details || {}
+        });
+        renderIncidentMasterList(allIncidents);
+        selectIncident(0);
+
+        // Update KPI count
+        const kpiRaw = document.getElementById('kpiRaw');
+        if (kpiRaw) {
+          const currentCount = parseInt(kpiRaw.textContent) || 0;
+          kpiRaw.textContent = currentCount + 1;
+        }
+
+      } catch (err) {
+        resultContainer.innerHTML = `
+          <div class="bg-rose-950/40 border border-rose-800/80 rounded-lg p-3 text-rose-300 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+            <span>Upload or triage failed: <b>${escapeHtml(err.message || err)}</b></span>
+          </div>
+        `;
+      } finally {
+        if (inputEl) inputEl.value = '';
+      }
+    }
+
+    function loadUploadedIncidentToPane(item) {
+      allIncidents.unshift({
+        ...item,
+        report_count: 1,
+        target_entity: item.destination || 'Uploaded Public Sector Report',
+        statutory_router: item.destination || 'ngCERT',
+        severity_level: item.sla_level || 'P1',
+        sanitized_text: item.cleaned_text,
+        iocs: item.technical_details || {}
+      });
+      renderIncidentMasterList(allIncidents);
+      selectIncident(0);
+      switchTab('queue');
     }
 
     function filterIncidents() {
