@@ -172,6 +172,12 @@ if __name__ == "__main__":
     print(json.dumps(results["summary"], indent=2))
     print("\n=== HONEST ERROR CASES (RULE 05) ===")
     for err in results["honest_error_analysis"][:3]:
-        print(f"Report: {err['report_id']} | True: {err['true_type']} | Pred: {err['predicted_type']}")
-        print(f"  Snippet: {err['snippet']}")
-        print(f"  Root Cause: {err['reason']}\n")
+        case_id = err.get('report_id') or err.get('boundary_id', 'CASE')
+        case_name = err.get('condition') or f"{err.get('true_type')} vs {err.get('predicted_type')}"
+        reason = err.get('rule_05_explanation') or err.get('reason')
+        print(f"Case: {case_id} | Condition: {case_name}")
+        if 'observed_behavior' in err:
+            print(f"  Observed: {err['observed_behavior']}")
+        elif 'snippet' in err:
+            print(f"  Snippet: {err['snippet']}")
+        print(f"  Analysis: {reason}\n")
