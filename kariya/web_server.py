@@ -701,6 +701,15 @@ async def agent_chat(req: ChatRequest):
     fallback_res = intelligent_offline_response(msg)
     return fallback_res
 
+@app.get("/download-pdf")
+@app.get("/BuilderOS_TrackD.pdf")
+async def download_submission_pdf():
+    from fastapi.responses import FileResponse
+    pdf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "BuilderOS_TrackD.pdf")
+    if os.path.exists(pdf_path):
+        return FileResponse(pdf_path, media_type="application/pdf", filename="BuilderOS_TrackD.pdf")
+    raise HTTPException(status_code=404, detail="Submission PDF not found")
+
 def run_server(host: str = "0.0.0.0", port: int = None):
     import uvicorn
     if port is None:
