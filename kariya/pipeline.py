@@ -239,6 +239,24 @@ class TriagePipeline:
         cleaned_text, redacted_pii = self.redact_pii(raw_text)
         destination, routing_rationale = self.route_incident(incident_type, severity, raw_text)
 
+        # Detect target public sector entity
+        target_entity = "Federal Public Sector MDA"
+        org_patterns = [
+            (r"\b(?:CBN|Central Bank(?: of Nigeria)?)\b", "Central Bank of Nigeria (CBN)"),
+            (r"\b(?:FIRS|Federal Inland Revenue(?: Service)?)\b", "Federal Inland Revenue Service (FIRS)"),
+            (r"\b(?:IPPIS|Accountant-General|OAGF|Payroll)\b", "Office of the Accountant-General (IPPIS)"),
+            (r"\b(?:NIMC|National Identity(?: Management)?)\b", "National Identity Management Commission (NIMC)"),
+            (r"\b(?:NAFDAC)\b", "NAFDAC Nigeria"),
+            (r"\b(?:Federal High Court|Judiciary|Supreme Court)\b", "Federal High Court / Judiciary"),
+            (r"\b(?:Bayero University|BUK|University of Lagos|UNILAG|ABU Zaria)\b", "Federal Universities / Tertiary"),
+            (r"\b(?:Ministry of \w+)\b", "Federal Ministry"),
+            (r"\b(?:LIRS|Lagos State Internal Revenue)\b", "Lagos State Internal Revenue Service (LIRS)")
+        ]
+        for pat, name in org_patterns:
+            if re.search(pat, raw_text, re.IGNORECASE):
+                target_entity = name
+                break
+
         sla_data = self.SEVERITY_SLAS.get(severity, {})
 
         return {
@@ -249,12 +267,14 @@ class TriagePipeline:
             "urgency_score": score,
             "sla": sla_data.get("sla", "1 Hour"),
             "sla_level": sla_data.get("level", "P2"),
+            "target_entity": target_entity,
             "technical_details": iocs,
             "ioc_count": len(all_ioc_flat),
             "cleaned_text": cleaned_text,
             "redacted_pii": redacted_pii,
             "pii_count": len(redacted_pii),
             "destination": destination,
+            "statutory_router": destination,
             "routing_rationale": routing_rationale,
             "type_rationale": type_rationale,
             "raw_text": raw_text

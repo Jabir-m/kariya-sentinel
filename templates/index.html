@@ -74,6 +74,46 @@
       50% { opacity: 0.4; transform: scale(1.15); }
     }
     .radar-pulse { animation: agent-pulse 2s infinite ease-in-out; }
+
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-in {
+      animation: slideInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); }
+      50% { box-shadow: 0 0 28px rgba(16, 185, 129, 0.35); border-color: rgba(16, 185, 129, 0.65); }
+    }
+    .neural-glow {
+      animation: pulseGlow 3.5s infinite ease-in-out;
+    }
+
+    @keyframes waveBarAnim {
+      0%, 100% { height: 4px; opacity: 0.5; }
+      50% { height: 16px; opacity: 1; }
+    }
+    .wave-bar-1 { animation: waveBarAnim 0.9s ease-in-out infinite 0.1s; }
+    .wave-bar-2 { animation: waveBarAnim 0.9s ease-in-out infinite 0.3s; }
+    .wave-bar-3 { animation: waveBarAnim 0.9s ease-in-out infinite 0.5s; }
+    .wave-bar-4 { animation: waveBarAnim 0.9s ease-in-out infinite 0.2s; }
+
+    .hover-lift {
+      transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    }
+    .hover-lift:hover {
+      transform: translateY(-1.5px);
+    }
+
+    @keyframes confidenceFill {
+      from { width: 0%; }
+      to { width: var(--target-width, 100%); }
+    }
+    .animate-confidence {
+      animation: confidenceFill 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans text-sm selection:bg-emerald-500/20 selection:text-emerald-300">
@@ -380,7 +420,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3.5 mb-2">
           <div class="flex items-center space-x-3">
             <div class="relative">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600/30 to-teal-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shadow-md">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600/30 to-teal-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shadow-md neural-glow">
                 <i class="fa-solid fa-robot text-lg"></i>
               </div>
               <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-zinc-950 radar-pulse"></span>
@@ -396,14 +436,25 @@
 
           <!-- Capability Badges & Controls -->
           <div class="flex items-center space-x-2 text-xs font-mono">
-            <div class="hidden md:flex items-center space-x-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded text-[10px] text-zinc-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>Local NLP Engine</span>
+            <!-- Neural Audio/Reasoning Visualizer -->
+            <div class="hidden md:flex items-center gap-1.5 bg-emerald-950/30 border border-emerald-500/30 px-2.5 py-1 rounded text-[10px] text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 radar-pulse"></span>
+              <span>NEURAL LINK</span>
+              <div class="flex items-end gap-0.5 h-3 ml-1">
+                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-1"></div>
+                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-2"></div>
+                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-3"></div>
+                <div class="w-0.5 bg-emerald-400 rounded-full wave-bar-4"></div>
+              </div>
+            </div>
+
+            <div class="hidden lg:flex items-center space-x-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded text-[10px] text-zinc-400">
+              <span>Gemma 4 31B</span>
               <span class="text-zinc-600">•</span>
               <span>NDPA 2023 Scrubber</span>
             </div>
 
-            <button onclick="clearChatMessages()" class="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition text-[11px]" title="Clear Conversation Memory">
+            <button onclick="clearChatMessages()" class="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition text-[11px] hover-lift" title="Clear Conversation Memory">
               <i class="fa-solid fa-trash-can mr-1"></i> Clear
             </button>
           </div>
@@ -412,10 +463,10 @@
         <!-- Quick Action Prompt Chips -->
         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 text-[11px] font-mono text-zinc-300 border-b border-zinc-800/60 mb-2">
           <span class="text-zinc-500 text-[10px] uppercase font-bold mr-1 flex-shrink-0"><i class="fa-solid fa-bolt text-emerald-400 mr-1"></i>Quick Actions:</span>
-          <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
+          <button onclick="sendQuickPrompt('/triage CBN ALERT: Core payment server infected with ransomware .locked! Dem dey ask for 15 btc to wallet bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh. Officer BVN: 22345678901, Phone: 08031234567')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300 hover-lift">
             ⚡ Triage Pidgin Ransomware
           </button>
-          <button onclick="sendQuickPrompt('/triage IPPIS ALERT: 40 ghost worker accounts inserted into Federal Ministry of Agriculture payroll. Beneficiary Zenith Bank 2088192039. Attacker admin console IP 105.112.44.88.')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300">
+          <button onclick="sendQuickPrompt('/triage IPPIS ALERT: 40 ghost worker accounts inserted into Federal Ministry of Agriculture payroll. Beneficiary Zenith Bank 2088192039. Attacker admin console IP 105.112.44.88.')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-emerald-300 hover-lift">
             💳 Triage IPPIS Payroll Tamper
           </button>
           <button onclick="sendQuickPrompt('What is critical for today in Nigerian MDAs?')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/40 px-2.5 py-1 rounded-md transition whitespace-nowrap text-zinc-300 hover:text-amber-300">
@@ -1622,27 +1673,38 @@
       const isUser = role === 'user';
       
       const msgDiv = document.createElement('div');
-      msgDiv.className = isUser ? 'flex items-start justify-end space-x-2' : 'flex items-start space-x-2.5';
+      msgDiv.className = isUser ? 'flex items-start justify-end space-x-2 animate-slide-in' : 'flex items-start space-x-2.5 animate-slide-in';
 
       let renderedBody = formatMarkdown(content);
 
       if (isUser) {
         msgDiv.innerHTML = `
-          <div class="bg-zinc-800 text-zinc-100 p-3 rounded-xl rounded-tr-none max-w-[85%] leading-relaxed">
+          <div class="bg-zinc-800 text-zinc-100 p-3.5 rounded-xl rounded-tr-none max-w-[85%] leading-relaxed shadow-sm">
             ${escapeHtml(content)}
           </div>
-          <div class="w-7 h-7 rounded-lg bg-zinc-700 text-zinc-300 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs">
+          <div class="w-8 h-8 rounded-lg bg-zinc-700 text-zinc-300 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs shadow">
             <i class="fa-solid fa-user"></i>
           </div>
         `;
       } else {
+        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         msgDiv.innerHTML = `
-          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs border border-emerald-500/30 shadow-sm">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs border border-emerald-500/30 shadow-md">
             <i class="fa-solid fa-shield-halved"></i>
           </div>
-          <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl rounded-tl-none max-w-[85%] text-zinc-200 leading-relaxed space-y-2.5 shadow-sm">
+          <div class="bg-zinc-900/90 border border-zinc-800 p-4 rounded-xl rounded-tl-none max-w-[88%] text-zinc-200 leading-relaxed space-y-2.5 shadow-md">
+            <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2 text-[10px] text-zinc-400 font-mono">
+              <span class="font-bold text-white flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 radar-pulse"></span> KARIYA Intelligence</span>
+              <span>${timeNow}</span>
+            </div>
             ${renderedBody}
             ${triageData ? renderTriageInlineActions(triageData) : ''}
+            <div class="mt-2 pt-2 border-t border-zinc-800/60 flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+              <span class="text-emerald-400/80"><i class="fa-solid fa-shield-halved text-[9px] mr-1"></i>Track D Sovereign Defense</span>
+              <button onclick="copyToClipboard('${escapeHtml(content).replace(/'/g, "\\'")}', this)" class="hover:text-emerald-400 px-2 py-0.5 rounded bg-zinc-950/60 border border-zinc-800/80 hover:border-zinc-700 transition" title="Copy Message Text">
+                <i class="fa-regular fa-copy mr-1"></i> Copy
+              </button>
+            </div>
           </div>
         `;
       }
@@ -1654,13 +1716,13 @@
     function renderTriageInlineActions(data) {
       return `
         <div class="mt-2 pt-2.5 border-t border-zinc-800/80 flex flex-wrap items-center gap-2 text-[11px] font-mono">
-          <button onclick="copyToClipboard('${escapeHtml(data.cleaned_text || '')}', this)" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1">
+          <button onclick="copyToClipboard('${escapeHtml(data.cleaned_text || '')}', this)" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1 hover-lift">
             <i class="fa-solid fa-copy text-emerald-400"></i> Copy Sanitized Text
           </button>
-          <button onclick="switchTab('queue')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1">
+          <button onclick="switchTab('queue')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1 hover-lift">
             <i class="fa-solid fa-list-check text-cyan-400"></i> View Active Queue
           </button>
-          <button onclick="switchTab('dossier')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1">
+          <button onclick="switchTab('dossier')" class="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2 py-1 rounded text-zinc-300 transition flex items-center gap-1 hover-lift">
             <i class="fa-solid fa-file-export text-purple-400"></i> Generate Dossier
           </button>
         </div>
@@ -1671,12 +1733,18 @@
       const container = document.getElementById('chatMessages');
       const div = document.createElement('div');
       div.id = id;
-      div.className = 'flex items-center space-x-2 text-zinc-500 text-[11px] font-mono py-1';
+      div.className = 'flex items-center space-x-2 text-zinc-500 text-[11px] font-mono py-1 animate-slide-in';
       div.innerHTML = `
-        <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20">
-          <i class="fa-solid fa-circle-notch fa-spin"></i>
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20 shadow-sm">
+          <i class="fa-solid fa-microchip fa-spin"></i>
         </div>
-        <span>KARIYA is reasoning & running on-device tools...</span>
+        <div class="flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 px-3 py-1.5 rounded-full shadow-sm">
+          <div class="flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          </div>
+          <span class="text-zinc-300 text-[11px]">KARIYA is reasoning &amp; dispatching cybersecurity tools...</span>
+        </div>
       `;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
@@ -1721,6 +1789,10 @@
     function loadPreset(key) {
       if (!key || !PRESETS[key]) return;
       document.getElementById('sandboxInput').value = PRESETS[key];
+      // Quick flash animation
+      const textarea = document.getElementById('sandboxInput');
+      textarea.classList.add('border-emerald-500');
+      setTimeout(() => textarea.classList.remove('border-emerald-500'), 500);
     }
 
     function clearSandbox() {
@@ -1731,11 +1803,75 @@
 
     async function executeLiveTriage() {
       const raw = document.getElementById('sandboxInput').value.trim();
-      if (!raw) return;
+      if (!raw) {
+        alert('Please enter or paste an incident report, or select an attack scenario above.');
+        document.getElementById('sandboxInput').focus();
+        return;
+      }
 
       const btn = document.getElementById('triageBtn');
-      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Triaging...`;
+      const resContainer = document.getElementById('sandboxResults');
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing Attack Vector...`;
       btn.disabled = true;
+
+      // Show animated 5-stage pipeline progress
+      resContainer.classList.remove('hidden');
+      resContainer.innerHTML = `
+        <div class="space-y-3 font-mono text-xs animate-slide-in">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+            <div class="flex items-center gap-2 text-white font-bold">
+              <i class="fa-solid fa-microchip text-emerald-400 fa-spin"></i>
+              <span>KARIYA Defense Pipeline Executing (5 Stages)</span>
+            </div>
+            <span class="text-emerald-400 text-[10px]">Real-Time On-Premise Engine</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 text-[11px]">
+            <div id="pStage1" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-500 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i>
+              <span>1. Dialect Norm</span>
+            </div>
+            <div id="pStage2" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-500 flex items-center gap-1.5 transition">
+              <i class="fa-regular fa-clock"></i>
+              <span>2. NDPR Mask</span>
+            </div>
+            <div id="pStage3" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-500 flex items-center gap-1.5 transition">
+              <i class="fa-regular fa-clock"></i>
+              <span>3. ML Classifier</span>
+            </div>
+            <div id="pStage4" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-500 flex items-center gap-1.5 transition">
+              <i class="fa-regular fa-clock"></i>
+              <span>4. IOC Forensics</span>
+            </div>
+            <div id="pStage5" class="bg-zinc-950 p-2.5 rounded border border-zinc-800 text-zinc-500 flex items-center gap-1.5 transition">
+              <i class="fa-regular fa-clock"></i>
+              <span>5. SLA Routing</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Quick visual progression through stages
+      const s1 = document.getElementById('pStage1');
+      const s2 = document.getElementById('pStage2');
+      const s3 = document.getElementById('pStage3');
+      const s4 = document.getElementById('pStage4');
+      const s5 = document.getElementById('pStage5');
+
+      setTimeout(() => {
+        if (s1) { s1.className = 'bg-emerald-950/30 p-2.5 rounded border border-emerald-700/60 text-emerald-300 flex items-center gap-1.5'; s1.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>1. Dialect Norm</span>`; }
+        if (s2) { s2.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i> <span>2. NDPR Mask</span>`; }
+      }, 100);
+
+      setTimeout(() => {
+        if (s2) { s2.className = 'bg-emerald-950/30 p-2.5 rounded border border-emerald-700/60 text-emerald-300 flex items-center gap-1.5'; s2.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>2. NDPR Mask</span>`; }
+        if (s3) { s3.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i> <span>3. ML Classifier</span>`; }
+      }, 200);
+
+      setTimeout(() => {
+        if (s3) { s3.className = 'bg-emerald-950/30 p-2.5 rounded border border-emerald-700/60 text-emerald-300 flex items-center gap-1.5'; s3.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>3. ML Classifier</span>`; }
+        if (s4) { s4.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i> <span>4. IOC Forensics</span>`; }
+      }, 300);
 
       const t0 = performance.now();
       try {
@@ -1747,9 +1883,20 @@
         const result = await res.json();
         const t1 = performance.now();
 
-        renderSandboxResult(result, (t1 - t0).toFixed(1));
+        if (s4) { s4.className = 'bg-emerald-950/30 p-2.5 rounded border border-emerald-700/60 text-emerald-300 flex items-center gap-1.5'; s4.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>4. IOC Forensics</span>`; }
+        if (s5) { s5.className = 'bg-emerald-950/30 p-2.5 rounded border border-emerald-700/60 text-emerald-300 flex items-center gap-1.5'; s5.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>5. SLA Routing</span>`; }
+
+        setTimeout(() => {
+          renderSandboxResult(result, (t1 - t0).toFixed(1));
+        }, 250);
+
       } catch (err) {
-        alert('Triage failed: ' + err);
+        resContainer.innerHTML = `
+          <div class="bg-rose-950/40 border border-rose-800 text-rose-300 p-4 rounded-xl font-mono text-xs flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation text-rose-400"></i>
+            <span>Triage failed: <b>${escapeHtml(err.message || err)}</b></span>
+          </div>
+        `;
       } finally {
         btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Run Autonomous Triage`;
         btn.disabled = false;
@@ -1762,36 +1909,130 @@
 
       const sevBadge = getSeverityBadge(r.severity);
       const conf = ((r.confidence || 0.95) * 100).toFixed(1);
+      const targetEntity = r.target_entity || r.destination || 'Federal Public Sector MDA';
+      const router = r.statutory_router || r.destination || 'National CERT (ngCERT)';
+      const piiList = r.redacted_pii || [];
 
       resContainer.innerHTML = `
-        <div class="border-b border-zinc-800 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono text-xs">
-          <div class="flex items-center space-x-2">
-            <span class="${sevBadge} px-2 py-0.5 rounded text-xs font-bold uppercase">${r.severity} (${r.severity_level || 'P1'})</span>
-            <span class="text-sm font-bold text-white">${escapeHtml(r.incident_type)}</span>
+        <div class="space-y-4 font-mono text-xs animate-slide-in">
+          
+          <!-- Top Header Strip -->
+          <div class="border-b border-zinc-800 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center space-x-2.5">
+              <span class="${sevBadge} px-2.5 py-1 rounded-md text-xs font-bold uppercase shadow-sm">
+                ${r.severity} (${r.sla_level || 'P1'})
+              </span>
+              <span class="text-sm sm:text-base font-bold text-white tracking-wide">${escapeHtml(r.incident_type)}</span>
+            </div>
+            <div class="flex items-center gap-2 text-zinc-400 text-[11px]">
+              <span class="bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">Processed in <b class="text-emerald-400">${latency}ms</b></span>
+              <span class="bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">ML Confidence: <b class="text-cyan-400">${conf}%</b></span>
+            </div>
           </div>
-          <div class="text-zinc-400 text-[11px]">Processed in <b class="text-emerald-400">${latency}ms</b> • Confidence: <b>${conf}%</b></div>
-        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-          <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800">
-            <span class="text-zinc-500 block text-[10px]">Target Entity:</span>
-            <b class="text-zinc-200">${escapeHtml(r.target_entity || 'Federal Public Sector')}</b>
+          <!-- 4-Grid Vitals Matrix -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-[11px]">
+            <div class="bg-zinc-900/90 p-3 rounded-lg border border-zinc-800 hover-lift">
+              <span class="text-zinc-500 block text-[10px] uppercase font-bold">Target Institution:</span>
+              <b class="text-zinc-200 mt-0.5 block truncate" title="${escapeHtml(targetEntity)}">${escapeHtml(targetEntity)}</b>
+            </div>
+            <div class="bg-zinc-900/90 p-3 rounded-lg border border-zinc-800 hover-lift">
+              <span class="text-zinc-500 block text-[10px] uppercase font-bold">Statutory SLA Window:</span>
+              <b class="text-amber-400 mt-0.5 block">${escapeHtml(r.sla || '15 Minutes')}</b>
+            </div>
+            <div class="bg-zinc-900/90 p-3 rounded-lg border border-zinc-800 hover-lift">
+              <span class="text-zinc-500 block text-[10px] uppercase font-bold">Statutory Router:</span>
+              <b class="text-cyan-400 mt-0.5 block truncate" title="${escapeHtml(router)}">${escapeHtml(router)}</b>
+            </div>
+            <div class="bg-zinc-900/90 p-3 rounded-lg border border-zinc-800 hover-lift">
+              <span class="text-zinc-500 block text-[10px] uppercase font-bold">NDPR / NDPA 2023 Mask:</span>
+              <b class="text-emerald-400 mt-0.5 block">${piiList.length} Protected Tokens</b>
+            </div>
           </div>
-          <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800">
-            <span class="text-zinc-500 block text-[10px]">Statutory SLA:</span>
-            <b class="text-amber-400">${escapeHtml(r.sla || '15 Minutes')}</b>
-          </div>
-          <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800">
-            <span class="text-zinc-500 block text-[10px]">NDPR Redacted:</span>
-            <b class="text-emerald-400">${(r.redacted_pii || []).length} Fields Scrubbed</b>
-          </div>
-        </div>
 
-        <div class="space-y-2 font-mono text-xs">
-          <div class="text-emerald-400 font-semibold text-[11px]">NDPR-Sanitized Output:</div>
-          <div class="bg-zinc-950 p-3 rounded border border-emerald-900/40 text-emerald-300 text-[11px] leading-relaxed whitespace-pre-wrap">${escapeHtml(r.cleaned_text || r.sanitized_text || '')}</div>
+          <!-- Rationale Banner -->
+          <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-3 space-y-1.5 text-[11px]">
+            <div class="text-zinc-300 font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-scale-balanced text-amber-400 text-xs"></i>
+              <span>Autonomous Decision & Statutory Justification:</span>
+            </div>
+            <p class="text-zinc-400 leading-relaxed">${escapeHtml(r.type_rationale || '')} ${escapeHtml(r.routing_rationale || '')}</p>
+          </div>
+
+          <!-- NDPR Scrubbed Text Box -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-check"></i> NDPR-Sanitized Output (Safe for Public Regulators):
+              </span>
+              <button onclick="copyToClipboard('${escapeHtml(r.cleaned_text || '').replace(/'/g, "\\'")}', this)" class="text-zinc-400 hover:text-emerald-400 text-[10px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 transition">
+                <i class="fa-regular fa-copy mr-1"></i> Copy
+              </button>
+            </div>
+            <div class="bg-zinc-950 p-3.5 rounded-lg border border-emerald-900/40 text-emerald-300 leading-relaxed whitespace-pre-wrap text-[11px] max-h-40 overflow-y-auto">${escapeHtml(r.cleaned_text || r.sanitized_text || '')}</div>
+          </div>
+
+          <!-- Extracted Technical Indicators (IOCs) -->
+          <div class="pt-2 border-t border-zinc-800">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-zinc-400 text-[10px] uppercase font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-crosshairs text-purple-400"></i> Extracted Forensic IOCs (${r.ioc_count || 0}):
+              </span>
+              <span class="text-[9px] text-zinc-500">Click magnifying glass for live zero-login threat intel</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${renderIocChips(r.technical_details || {})}
+            </div>
+          </div>
+
+          <!-- PII Masked Breakdown (if any) -->
+          ${piiList.length > 0 ? `
+            <div class="pt-2 border-t border-zinc-800">
+              <span class="text-zinc-400 text-[10px] uppercase font-bold block mb-1">
+                <i class="fa-solid fa-user-shield text-emerald-400 mr-1"></i> Scrubbed Citizen Identifiers (NDPA 2023):
+              </span>
+              <div class="flex flex-wrap gap-1.5">
+                ${piiList.map(p => `<span class="bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-[10px]"><b class="text-emerald-400">${escapeHtml(p.type)}</b>: ${escapeHtml(p.value)}</span>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Interactive Actions Bar -->
+          <div class="pt-3 border-t border-zinc-800 flex flex-wrap items-center gap-2 text-[11px]">
+            <button onclick="saveSandboxToQueue(${JSON.stringify(r).replace(/"/g, '&quot;')})" class="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-sm hover-lift">
+              <i class="fa-solid fa-list-check"></i> Add to Active Queue &amp; Inspect
+            </button>
+            <button onclick="sendQuickPrompt('/triage ' + ${JSON.stringify((r.cleaned_text || '').substring(0, 300)).replace(/"/g, '&quot;')}); switchTab('agent')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 hover-lift">
+              <i class="fa-solid fa-robot text-emerald-400"></i> Ask KARIYA Agent to Analyze
+            </button>
+            <button onclick="switchTab('dossier')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 hover-lift">
+              <i class="fa-solid fa-file-export text-purple-400"></i> Export Formal ngCERT Dossier
+            </button>
+          </div>
+
         </div>
       `;
+    }
+
+    function saveSandboxToQueue(item) {
+      allIncidents.unshift({
+        ...item,
+        report_count: 1,
+        target_entity: item.target_entity || item.destination || 'Simulator Ingest',
+        statutory_router: item.statutory_router || item.destination || 'National CERT (ngCERT)',
+        severity_level: item.sla_level || 'P1',
+        sanitized_text: item.cleaned_text,
+        iocs: item.technical_details || {}
+      });
+      renderIncidentMasterList(allIncidents);
+      selectIncident(0);
+      switchTab('queue');
+
+      const kpiRaw = document.getElementById('kpiRaw');
+      if (kpiRaw) {
+        const c = parseInt(kpiRaw.textContent) || 0;
+        kpiRaw.textContent = c + 1;
+      }
     }
 
     async function toggleOfflineMode() {
